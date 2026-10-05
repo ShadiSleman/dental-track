@@ -1,134 +1,108 @@
 # דיאגרמת סביבות — DentalTrack
 
-עודכן: **2026-10-05**
+> עדכון אוקטובר 2026 — ראה גם [`diagrams-environments.html`](diagrams-environments.html) לגרסה ויזואלית עם zoom.
 
 ---
 
-## ארכיטקטורת המערכת
+## ארכיטקטורה
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENTS                                   │
-│                                                                  │
-│  🌐 Web Browser          📱 Android App (Capacitor)             │
-│  http://localhost:5174   il.dentaltrack.app                      │
-│  (React + Vite)          (WebView מעל React build)              │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │ HTTP REST + Socket.io
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     BACKEND (Express)                            │
-│                   http://localhost:5051                           │
-│                                                                  │
-│  /api/auth          JWT Authentication                           │
-│  /api/work-orders   CRUD + stage updates + file upload           │
-│  /api/messages      Chat per work order                          │
-│  /api/admin         Super admin only                             │
-│                                                                  │
-│  Socket.io ──── real-time events:                               │
-│    new_order / stage_updated / notification / message            │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │ Mongoose ODM
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       MongoDB                                    │
-│             mongodb://localhost:27017/dental-track               │
-│                                                                  │
-│  Collections:                                                    │
-│  workorders · users · labs · clinics                            │
-│  messages · notifications · auditlogs                           │
-│  subscriptions · supporttickets · errorlogs                     │
-└─────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Cloudinary (תמונות)                           │
-│                   https://cloudinary.com                         │
-│                                                                  │
-│  dental-track/orders/       ← קבצי עבודות                      │
-│  dental-track/stage-images/ ← תמונות שלבים                     │
-└─────────────────────────────────────────────────────────────────┘
+Browser / Mobile Browser
+        │
+        │  HTTPS
+        ▼
+   ┌─────────────────────────────────────┐
+   │           Vercel                    │
+   │  ┌───────────┐  ┌────────────────┐  │
+   │  │  CDN      │  │  Serverless    │  │
+   │  │  dist/    │  │  api/index.js  │  │
+   │  │  React    │  │  (Express)     │  │
+   │  └───────────┘  └───────┬────────┘  │
+   └──────────────────────────┼──────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+              ▼               ▼               ▼
+       Neon Postgres    Cloudflare R2    (future)
+       (Prisma ORM)     (file storage)
 ```
 
 ---
 
-## זרימת עבודה — Work Order Flow
+## Polling (מחליף Socket.io)
 
 ```
-רופא (Doctor)
-    │
-    │  POST /api/work-orders
-    ▼
-[scan_received] ──→ [order_opened] ──→ [cad_design]
-                                            │
-                                            ▼
-                              [awaiting_approval] ◄── רופא צריך לאשר
-                                            │
-                              ┌─────────────┴──────────────┐
-                         אישר │                            │ דחה
-                              ▼                            ▼
-                          [approved]               חוזר ל-[cad_design]
-                              │
-                              ▼
-                       [manufacturing]
-                              │
-                              ▼
-                          [finishing]
-                              │
-                              ▼
-                        [quality_check]
-                              │
-                              ▼
-                       [ready_to_ship] ──→ שליח מקבל התראה
-                              │
-                              ▼
-                        [with_courier]
-                              │
-                              ▼
-                          [delivered] ──→ Socket event לרופא
+Client (usePolling.ts)
+  │
+  ├── GET /api/notifications  ← כל 4 שניות
+  │     └── updateNotifStore()
+  │
+  └── GET /api/work-orders/mine  ← כל 10 שניות
+        └── updateOrdersStore()
 ```
 
 ---
 
-## הרשאות לפי תפקיד
+## סביבות
 
-| פעולה | doctor | lab_manager | technician | courier | super_admin |
-|---|:---:|:---:|:---:|:---:|:---:|
-| יצירת עבודה | ✅ | ❌ | ❌ | ❌ | ✅ |
-| אישור/דחיית עבודה | ✅ | ❌ | ❌ | ❌ | ✅ |
-| קידום שלב | ❌ | ✅ | ✅ | ❌ | ✅ |
-| הקצאת טכנאי | ❌ | ✅ | ❌ | ❌ | ✅ |
-| ראיית כל העבודות | ❌ | ✅ | ❌ | ❌ | ✅ |
-| עבודות שליח בלבד | ❌ | ❌ | ❌ | ✅ | ✅ |
-| ממשק Admin | ❌ | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## כתובות חיות
-
-| סביבה | שירות | כתובת |
-|---|---|---|
-| LOCAL | Frontend | http://localhost:5174 |
-| LOCAL | Backend API | http://localhost:5051/api |
-| LOCAL | MongoDB | mongodb://localhost:27017/dental-track |
-| LOCAL (Android) | Backend מהטלפון | http://10.0.0.7:5051/api |
-| PRODUCTION | Frontend | TBD (Render) |
-| PRODUCTION | Backend | TBD (Render) |
-| PRODUCTION | MongoDB | TBD (MongoDB Atlas) |
-| PRODUCTION | קבצים | Cloudinary |
-
----
-
-## חינם / תשלום
-
-| שירות | תוכנית | עלות | הערות |
+| | LOCAL | DEV | PROD |
 |---|---|---|---|
-| MongoDB (LOCAL) | Community | ₪0 | מקומי |
-| MongoDB Atlas (PROD) | M0 Free | ₪0 | עד 512MB |
-| Cloudinary | Free | ₪0 | עד 25 קרדיטים/חודש |
-| Render (Frontend) | Free | ₪0 | Sleep אחרי חוסר פעילות |
-| Render (Backend) | Free | ₪0 | Sleep אחרי חוסר פעילות |
-| APK (Android debug) | — | ₪0 | לא דרוש Play Store |
-| Google Play Store | חד-פעמי | $25 ≈ ₪75 | אם רוצים להפיץ |
+| **APP_ENV** | `local` | `dev` | `prod` |
+| **Frontend** | localhost:5174 | Vercel Preview | Vercel Production |
+| **Backend** | localhost:5051 | Vercel Serverless | Vercel Serverless |
+| **DB** | Neon main branch | Neon main branch | Neon prod branch |
+| **Files** | R2 `local/` prefix | R2 `dev/` prefix | R2 `prod/` prefix |
 
-> ראה פירוט עלויות מלא: [`tasks/costs.md`](./tasks/costs.md)
+---
+
+## שלבי עבודה
+
+```
+scan_received → order_opened → cad_design → awaiting_approval
+     → approved → manufacturing → finishing → quality_check
+          → ready_to_ship → with_courier → delivered
+```
+
+**כלל דחייה:** `awaiting_approval` → דחייה → חזרה ל-`cad_design`
+
+---
+
+## מבנה הפרויקט
+
+```
+dental-track/
+├── api/
+│   ├── index.js        ← Vercel Serverless (מייבא app.js)
+│   └── package.json    ← {"type": "commonjs"}
+├── prisma/
+│   └── schema.prisma   ← PostgreSQL schema (10 models)
+├── server/
+│   └── src/
+│       ├── app.js      ← Express app (ללא listen)
+│       ├── server.js   ← local dev (listen :5051)
+│       ├── lib/
+│       │   ├── prisma.js   ← Prisma Client singleton
+│       │   ├── r2.js       ← Cloudflare R2 upload
+│       │   └── withId.js   ← _id backward-compat
+│       ├── routes/     ← auth · workOrders · messages · notifications · admin
+│       ├── middleware/ ← authJwt · roleGuard · auditLogger
+│       └── scripts/    ← seed.js · seedDummy.js
+├── src/                ← React 18 + TypeScript + Tailwind
+│   ├── hooks/
+│   │   └── usePolling.ts  ← polling hook
+│   ├── api/            ← axios API clients
+│   ├── components/
+│   ├── pages/
+│   ├── store/          ← Zustand (auth, orders, notif)
+│   └── types.ts
+├── docs/               ← תיעוד זה
+├── .env.example
+├── vercel.json
+└── package.json
+```
+
+---
+
+## GitHub
+
+🔗 [https://github.com/ShadiSleman/dental-track](https://github.com/ShadiSleman/dental-track)

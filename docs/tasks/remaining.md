@@ -1,35 +1,70 @@
-# משימות פתוחות
+# מה נשאר לעשות — DentalTrack
 
-מעבירים שורה ל־`done.md` כשמסתיימת. לא מוחקים בלי תיעוד.
-דרישות מוצר שעודכנו מהמשתמש: [`requirements.md`](./requirements.md)
+> עדכון אחרון: אוקטובר 2026
 
 ---
 
-## Backend
+## ✅ הושלם
 
-- [ ] Cloudinary — להגדיר CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET ב-server/.env לצורך העלאת קבצים אמיתיים
-- [ ] Push Notifications — לממש שליחת push notifications אמיתית (כרגע רק socket)
-- [ ] JWT_SECRET — להחליף את הברירת מחדל לסוד אמיתי בסביבת production
+### תשתית
+- [x] מחיקת Android/Capacitor (הפרויקט הוא web-only)
+- [x] מחיקת Socket.io → Polling כל 4/10 שניות
+- [x] מחיקת MongoDB/Mongoose → PostgreSQL/Prisma (Neon)
+- [x] מחיקת Cloudinary → Cloudflare R2
+- [x] יצירת Prisma schema (כל 9 מודלים)
+- [x] כתיבת כל ה-routes מחדש עם Prisma
+- [x] מבנה Vercel Serverless (`api/index.js` + `vercel.json`)
+- [x] GitHub repo: https://github.com/ShadiSleman/dental-track
+- [x] usePolling hook (מחליף useSocket)
+- [x] seed.js + seedDummy.js עם Prisma
 
-## Frontend
+### פיצ'רים
+- [x] כל 11 שלבי עבודה (scan_received → delivered)
+- [x] 5 תפקידי משתמש (doctor, lab_manager, technician, courier, super_admin)
+- [x] Chat per work order
+- [x] Notification Bell
+- [x] Admin Dashboard (users, labs, subscriptions, logs, health, tickets)
+- [x] Statistics (LabStats page עם גרפים)
+- [x] Digital signature (courier delivery)
+- [x] File uploads (R2)
 
-- [ ] LabStats — לבדוק שגרף "עבודות לפי שלב" מציג נכון כשאין עבודות
-- [ ] WorkOrderDetail — לבדוק תצוגה נכונה של חתימת שליח על מסכים קטנים
+---
 
-## Mobile (Android)
+## 🔲 נשאר לעשות
 
-- [ ] להגדיר Push Notifications אמיתי ב-Android (Firebase / Capacitor PushNotifications)
-- [ ] לבדוק את כל הטאבים על מסך Android קטן (360px)
-- [ ] לשקול לחתום על APK (release signing) לפני הפצה ב-Play Store
+### חובה (לפני production)
 
-## Admin
+1. **Neon Setup**
+   - [ ] צור project `dental-track` ב-console.neon.tech
+   - [ ] צור branch `prod` לייצור
+   - [ ] Copy connection strings → הכנס ל-.env
 
-- [ ] AdminLabs — להוסיף אפשרות עריכת פרטי מעבדה ישירות מהממשק
-- [ ] AdminUsers — לאפשר יצירת משתמש חדש ישירות מהממשק (כרגע רק seed)
+2. **R2 Setup**
+   - [ ] יצור bucket `dental-track` ב-dash.cloudflare.com
+   - [ ] יצור R2 API token
+   - [ ] הפעל Public Access על הbucket
+   - [ ] Copy credentials → הכנס ל-.env
 
-## Deployment / Production
+3. **prisma db push**
+   ```bash
+   npx prisma db push
+   node server/src/scripts/seed.js
+   ```
 
-- [ ] להגדיר סביבת production עם MongoDB Atlas (לא localhost)
-- [ ] render.yaml — לוודא תצורת deployment נכונה ב-Render
-- [ ] FRONTEND_URL בסביבת production — לעדכן ל-URL האמיתי של הפרונטאנד
-- [ ] להגדיר HTTPS עבור ה-API בסביבת production
+4. **Vercel Deploy**
+   - [ ] חבר GitHub repo ל-Vercel
+   - [ ] הכנס כל ENV vars ב-Vercel Dashboard
+   - [ ] בדוק שה-build עובד
+
+---
+
+## 🔧 שיפורים עתידיים (optional)
+
+- [ ] Email notifications (SendGrid)
+- [ ] Push notifications (Web Push API)
+- [ ] Work order PDF export
+- [ ] Calendar view (תאריך יעד)
+- [ ] Multi-language (i18n)
+- [ ] PWA (manifest + service worker)
+- [ ] Rate limiting per user (לא רק global)
+- [ ] Prisma migrations (במקום db push)

@@ -8,8 +8,10 @@
     :root {
       --local: #1e40af;
       --local-bg: #dbeafe;
-      --prod: #334155;
-      --prod-bg: #e2e8f0;
+      --dev: #065f46;
+      --dev-bg: #d1fae5;
+      --prod: #7c3aed;
+      --prod-bg: #ede9fe;
       --share: #0369a1;
       --share-bg: #e0f2fe;
       --accent: #0f172a;
@@ -20,7 +22,7 @@
       background: #f1f5f9;
       color: #0f172a;
       font-family: "Segoe UI", "Arial Hebrew", Arial, sans-serif;
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1.5;
     }
     header {
@@ -40,13 +42,21 @@
       font-size: 1.2rem; font-weight: 800; cursor: pointer;
     }
     .stage { overflow: auto; height: calc(100vh - 90px); padding: 20px; }
-    .poster { transform-origin: top right; width: 1560px; }
+    .poster { transform-origin: top right; width: 1600px; }
+
+    /* ── BADGE ─────────────────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 800; vertical-align: middle; margin-right: 6px;
+    }
+    .badge-new { background: #d1fae5; color: #065f46; }
+    .badge-rem { background: #fee2e2; color: #991b1b; }
 
     /* ── ENV GRID ─────────────────────────────────────── */
     .grid {
       display: grid;
-      grid-template-columns: 180px 1fr 1fr;
-      gap: 0 12px;
+      grid-template-columns: 160px 1fr 1fr 1fr;
+      gap: 0 10px;
       background: #fff;
       border: 3px solid #64748b;
       border-radius: 14px;
@@ -55,27 +65,27 @@
     }
     .role {
       display: flex; align-items: center; justify-content: center;
-      text-align: center; font-weight: 800; font-size: 1.05rem;
+      text-align: center; font-weight: 800; font-size: 1rem;
       background: #0f172a; color: #fff;
       border-radius: 10px; padding: 10px 8px; margin: 6px 0;
     }
-    .head, .cell, .span {
+    .head, .cell, .span3 {
       border-radius: 12px; padding: 12px 14px 10px;
       margin: 6px 0; border: 3px solid #94a3b8;
     }
-    .head { text-align: center; font-weight: 800; font-size: 1.25rem; }
-    .head small, .cell small { display: block; font-weight: 600; font-size: 0.88rem; margin-top: 5px; }
+    .head { text-align: center; font-weight: 800; font-size: 1.2rem; }
+    .head small, .cell small { display: block; font-weight: 600; font-size: 0.85rem; margin-top: 5px; }
     .local { background: var(--local-bg); border-color: var(--local); }
+    .dev   { background: var(--dev-bg);   border-color: var(--dev); }
     .prod  { background: var(--prod-bg);  border-color: var(--prod); }
     .share { background: var(--share-bg); border-color: var(--share); }
-    .planned { opacity: 0.75; border-style: dashed; }
-    .span { grid-column: 2 / 4; text-align: center; font-weight: 700; }
-    .span .title { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+    .span3 { grid-column: 2 / 5; text-align: center; font-weight: 700; }
+    .span3 .title { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
     .down {
-      text-align: center; font-size: 1.6rem; font-weight: 800;
+      text-align: center; font-size: 1.5rem; font-weight: 800;
       color: #0f172a; line-height: 1; margin: 0; padding: 0;
     }
-    .down span { display: block; font-size: 0.8rem; font-weight: 700; color: #475569; }
+    .down span { display: block; font-size: 0.78rem; font-weight: 700; color: #475569; }
     .addr {
       display: block; direction: ltr; unicode-bidi: isolate;
       font-family: Consolas, monospace; font-size: 0.78rem;
@@ -97,12 +107,12 @@
     }
     .stage-box {
       display: flex; flex-direction: column; align-items: center;
-      gap: 4px; flex: 1; min-width: 110px;
+      gap: 4px; flex: 1; min-width: 100px;
     }
     .stage-pill {
-      padding: 8px 12px; border-radius: 999px;
-      font-weight: 700; font-size: 0.85rem; text-align: center;
-      white-space: nowrap; width: 100%; text-align: center;
+      padding: 8px 10px; border-radius: 999px;
+      font-weight: 700; font-size: 0.82rem; text-align: center;
+      white-space: nowrap; width: 100%;
     }
     .stage-arrow {
       font-size: 1.8rem; font-weight: 900; color: #475569;
@@ -127,23 +137,6 @@
       border-radius: 10px; font-size: 0.9rem; font-weight: 600;
     }
 
-    /* ── ROLES TABLE ──────────────────────────────────── */
-    .tables { width: 1560px; }
-    table {
-      width: 100%; border-collapse: collapse;
-      background: #fff; font-size: 1rem;
-      border-radius: 12px; overflow: hidden;
-      border: 2px solid #94a3b8; margin-bottom: 20px;
-    }
-    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: right; vertical-align: top; }
-    th { background: #e2e8f0; font-weight: 800; }
-    h3 { margin: 20px 0 8px; font-size: 1.2rem; }
-    .ok  { color: #15803d; font-weight: 800; }
-    .no  { color: #b45309; font-weight: 800; }
-    .free { color: #15803d; font-weight: 800; }
-    .pay  { color: #9a3412; font-weight: 800; }
-    .tbd  { color: #64748b; font-weight: 700; }
-
     /* ── ARCH DIAGRAM ─────────────────────────────────── */
     .arch {
       background: #fff; border: 2px solid #94a3b8;
@@ -153,24 +146,45 @@
     .arch h2 { margin: 0 0 16px; font-size: 1.3rem; }
     .arch-cols {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px; align-items: start;
+      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+      gap: 8px; align-items: center;
     }
     .arch-box {
       border: 3px solid #0f172a; border-radius: 14px;
       padding: 16px 16px 14px; background: #f8fafc;
+      align-self: start;
     }
-    .arch-box strong { display: block; font-size: 1.1rem; margin-bottom: 8px; }
-    .arch-box ul { margin: 0; padding-right: 18px; font-size: 0.88rem; line-height: 1.7; }
+    .arch-box strong { display: block; font-size: 1.05rem; margin-bottom: 8px; }
+    .arch-box ul { margin: 0; padding-right: 18px; font-size: 0.85rem; line-height: 1.75; }
     .arch-clients { background: #dbeafe; border-color: #1e40af; }
-    .arch-backend { background: #fef08a; border-color: #854d0e; }
+    .arch-vercel  { background: #fef08a; border-color: #854d0e; }
     .arch-db      { background: #d1fae5; border-color: #065f46; }
-    .arch-cloud   { background: #fce7f3; border-color: #9d174d; }
+    .arch-r2      { background: #fce7f3; border-color: #9d174d; }
     .arch-arrow {
       display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; font-weight: 900; color: #334155;
-      padding-top: 40px;
+      font-size: 2rem; font-weight: 900; color: #334155;
     }
+    .polling-badge {
+      display: inline-block; background: #fef08a; border: 2px solid #ca8a04;
+      color: #854d0e; font-size: 0.75rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 999px; margin-top: 4px;
+    }
+
+    /* ── TABLES ──────────────────────────────────────── */
+    .tables { width: 1600px; }
+    table {
+      width: 100%; border-collapse: collapse;
+      background: #fff; font-size: 0.95rem;
+      border-radius: 12px; overflow: hidden;
+      border: 2px solid #94a3b8; margin-bottom: 20px;
+    }
+    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: right; vertical-align: top; }
+    th { background: #e2e8f0; font-weight: 800; }
+    h3 { margin: 20px 0 8px; font-size: 1.2rem; }
+    .ok   { color: #15803d; font-weight: 800; }
+    .no   { color: #b45309; font-weight: 800; }
+    .free { color: #15803d; font-weight: 800; }
+    .pay  { color: #9a3412; font-weight: 800; }
   </style>
 </head>
 <body>
@@ -178,9 +192,10 @@
   <div>
     <h1>🦷 דיאגרמת סביבות — DentalTrack</h1>
     <p class="hint">
-      ארכיטקטורה · זרימת עבודה · הרשאות · סביבות · עלויות ·
+      עדכון אוקטובר 2026 — ארכיטקטורה · זרימת עבודה · הרשאות · סביבות · עלויות ·
       <a href="tasks/environments.md">environments.md</a> ·
-      <a href="tasks/costs.md">costs.md</a>
+      <a href="tasks/costs.md">costs.md</a> ·
+      <a href="https://github.com/ShadiSleman/dental-track" target="_blank" rel="noopener">GitHub ↗</a>
     </p>
   </div>
   <div class="zoom-bar">
@@ -194,160 +209,184 @@
 <div class="stage" id="stage">
 <div class="poster" id="poster">
 
+  <!-- ══ WHAT CHANGED ════════════════════════════════════════════ -->
+  <div style="background:#fff7ed;border:3px solid #f97316;border-radius:14px;padding:16px 20px;margin-bottom:20px">
+    <strong style="font-size:1.1rem">🔄 שינויים עיקריים — אוקטובר 2026</strong>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;font-size:0.9rem">
+      <div>
+        <span class="badge badge-rem">הוסר</span> <b>Android / Capacitor</b> — responsive web בלבד<br/>
+        <span class="badge badge-rem">הוסר</span> <b>Socket.io</b> → HTTP Polling כל 4 / 10 שניות<br/>
+        <span class="badge badge-rem">הוסר</span> <b>MongoDB / Mongoose</b> → PostgreSQL + Prisma (Neon)<br/>
+        <span class="badge badge-rem">הוסר</span> <b>Cloudinary</b> → Cloudflare R2 (S3-compatible)<br/>
+        <span class="badge badge-rem">הוסר</span> <b>Render</b> → Vercel (Frontend + Serverless API)
+      </div>
+      <div>
+        <span class="badge badge-new">חדש</span> <b>usePolling.ts</b> — notifications כל 4s, orders כל 10s<br/>
+        <span class="badge badge-new">חדש</span> <b>prisma/schema.prisma</b> — כל 9 מודלים עם Json columns<br/>
+        <span class="badge badge-new">חדש</span> <b>api/index.js</b> — Vercel Serverless entry<br/>
+        <span class="badge badge-new">חדש</span> <b>server/src/lib/</b> — prisma.js · r2.js · withId.js<br/>
+        <span class="badge badge-new">חדש</span> <b>GitHub</b> — ShadiSleman/dental-track ✅
+      </div>
+    </div>
+  </div>
+
   <!-- ══ 1. ARCHITECTURE ══════════════════════════════════════════ -->
   <div class="arch">
-    <h2>📐 ארכיטקטורת המערכת</h2>
+    <h2>📐 ארכיטקטורת המערכת (אחרי העדכון)</h2>
     <div class="arch-cols">
 
       <div class="arch-box arch-clients">
-        <strong>🖥️ Clients</strong>
+        <strong>🖥️ Client</strong>
         <ul>
-          <li><b>Web Browser</b><br/>React 18 + Vite<br/><span class="addr">http://localhost:5174</span></li>
-          <li style="margin-top:10px"><b>Android App</b><br/>Capacitor 7 (WebView)<br/><span class="addr">il.dentaltrack.app</span></li>
+          <li><b>Web Browser</b><br/>React 18 + Vite<br/>TypeScript + Tailwind</li>
+          <li style="margin-top:8px"><b>Mobile Browser</b><br/>Responsive Design<br/>ללא APK / Play Store</li>
+        </ul>
+        <div style="margin-top:8px">
+          <span class="polling-badge">polling כל 4s</span><br/>
+          <span style="font-size:0.8rem">מחליף Socket.io</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→<br/><span style="font-size:0.7rem">HTTPS</span></div>
+
+      <div class="arch-box arch-vercel">
+        <strong>☁️ Vercel</strong>
+        <ul>
+          <li><b>CDN</b> — dist/ (React build)<br/><span class="code">/* → index.html</span></li>
+          <li style="margin-top:6px"><b>Serverless Functions</b><br/><span class="code">api/index.js</span><br/>(Express app)</li>
+          <li style="margin-top:6px">
+            <span class="code">/api/auth</span><br/>
+            <span class="code">/api/work-orders</span><br/>
+            <span class="code">/api/notifications</span><br/>
+            <span class="code">/api/messages</span><br/>
+            <span class="code">/api/admin</span>
+          </li>
         </ul>
       </div>
 
-      <div class="arch-arrow">→</div>
-
-      <div class="arch-box arch-backend">
-        <strong>⚙️ Backend (Express)</strong>
-        <ul>
-          <li><span class="code">/api/auth</span> — JWT login</li>
-          <li><span class="code">/api/work-orders</span> — CRUD + stages</li>
-          <li><span class="code">/api/work-orders/stats</span> — סטטיסטיקות</li>
-          <li><span class="code">/api/messages</span> — צ'אט</li>
-          <li><span class="code">/api/admin</span> — Super admin</li>
-          <li style="margin-top:6px"><b>Socket.io</b><br/>new_order · stage_updated<br/>notification · message</li>
-        </ul>
-        <span class="addr">http://localhost:5051</span>
-      </div>
-
-      <div class="arch-arrow">→</div>
+      <div class="arch-arrow">→<br/><span style="font-size:0.7rem">Prisma</span></div>
 
       <div class="arch-box arch-db">
-        <strong>🗄️ MongoDB</strong>
+        <strong>🗄️ Neon PostgreSQL</strong>
         <ul>
-          <li>workorders</li>
-          <li>users</li>
-          <li>labs · clinics</li>
-          <li>messages</li>
-          <li>notifications</li>
-          <li>auditlogs</li>
-          <li>subscriptions</li>
-          <li>supporttickets</li>
-          <li>errorlogs</li>
+          <li>Branch: <b>main</b> → dev</li>
+          <li>Branch: <b>prod</b> → production</li>
+          <li style="margin-top:6px">טבלאות: User, Lab, Clinic<br/>WorkOrder, Message<br/>Notification, AuditLog<br/>SupportTicket, Subscription<br/>ErrorLog</li>
+          <li style="margin-top:6px"><span class="code">stageHistory → Json</span><br/><span class="code">files → Json</span></li>
         </ul>
-        <span class="addr">mongodb://localhost:27017/dental-track</span>
       </div>
 
-    </div>
+      <div class="arch-arrow">→<br/><span style="font-size:0.7rem">S3 API</span></div>
 
-    <!-- Cloudinary row -->
-    <div style="display:flex;align-items:center;gap:16px;margin-top:16px;">
-      <div class="arch-box arch-cloud" style="flex:1">
-        <strong>☁️ Cloudinary (קבצים ותמונות)</strong>
+      <div class="arch-box arch-r2">
+        <strong>📦 Cloudflare R2</strong>
         <ul>
-          <li><span class="code">dental-track/orders/</span> — קבצי עבודות (STL, PDF, תמונות)</li>
-          <li><span class="code">dental-track/stage-images/</span> — תמונות שלבים</li>
-          <li>מגבלת קובץ: 50MB · תמיכה: כל סוג קובץ</li>
+          <li>Bucket: <b>dental-track</b></li>
+          <li>מפתח ← S3-compatible</li>
+          <li style="margin-top:6px"><span class="code">local/orders/…</span><br/><span class="code">dev/orders/…</span><br/><span class="code">prod/orders/…</span></li>
+          <li style="margin-top:6px">Public URL<br/>קבצים ותמונות שלבים<br/>עד 50MB לקובץ</li>
         </ul>
-        <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
       </div>
+
     </div>
   </div>
 
   <!-- ══ 2. ENV GRID ═══════════════════════════════════════════════ -->
   <div class="grid">
     <div class="role">תפקיד</div>
-    <div class="head local">LOCAL<small>פיתוח יומיומי · המחשב שלך</small></div>
-    <div class="head prod planned">PRODUCTION<small>עתידי · Render · MongoDB Atlas</small></div>
+    <div class="head local">🖥️ LOCAL<small>פיתוח יומיומי</small></div>
+    <div class="head dev">🧪 DEV<small>Preview · Vercel</small></div>
+    <div class="head prod">🚀 PRODUCTION<small>Vercel Production</small></div>
+
+    <!-- APP_ENV -->
+    <div class="role">APP_ENV</div>
+    <div class="cell local"><code>local</code></div>
+    <div class="cell dev"><code>dev</code></div>
+    <div class="cell prod"><code>prod</code></div>
 
     <!-- Git -->
-    <div class="role">Git<br/>קוד משותף</div>
-    <div class="span share">
-      <div class="title">Git Repository — קוד הפרויקט</div>
-      <small>dental-track/ · Frontend + Backend + Android + docs. בלי נתוני מסד ובלי קבצי .env</small>
+    <div class="role">Git<br/>קוד</div>
+    <div class="span3 share">
+      <div class="title">GitHub — ShadiSleman/dental-track</div>
+      <small>Frontend + Backend + Prisma schema + docs · ללא .env</small><br/>
+      <small><a href="https://github.com/ShadiSleman/dental-track" target="_blank" rel="noopener">https://github.com/ShadiSleman/dental-track</a></small>
     </div>
 
     <div class="role"></div>
-    <p class="down">↓<span>מריץ מקומית</span></p>
-    <p class="down">↓<span>עתיד: Render auto-deploy</span></p>
+    <p class="down">↓<span>npm run dev</span></p>
+    <p class="down">↓<span>push → Vercel preview</span></p>
+    <p class="down">↓<span>promote → production</span></p>
 
     <!-- Pipeline -->
-    <div class="role">Pipeline<br/>הרצת קוד</div>
+    <div class="role">Pipeline<br/>הרצה</div>
     <div class="cell local">
-      <strong>npm run dev (Frontend)</strong>
-      <span class="addr">http://localhost:5174</span>
-      <small>Vite dev server · HMR · TypeScript</small>
-      <br/><strong>npm run dev (Backend)</strong>
-      <span class="addr">http://localhost:5051</span>
-      <small>nodemon · hot reload</small>
+      <strong>npm run dev</strong>
+      <span class="addr">Frontend: http://localhost:5174<br/>Backend: http://localhost:5051</span>
+      <small>Vite + nodemon · proxy /api → :5051</small>
     </div>
-    <div class="cell prod planned">
-      <strong>Render Web Service</strong>
-      <span class="addr"><a href="https://dashboard.render.com" target="_blank" rel="noopener">https://dashboard.render.com</a></span>
-      <small>render.yaml מוגדר · auto-deploy מ-git · Free tier: sleep אחרי 15 דק׳</small>
+    <div class="cell dev">
+      <strong>Vercel — Preview Deploy</strong>
+      <span class="addr"><a href="https://vercel.com" target="_blank" rel="noopener">https://dental-track-git-master.vercel.app</a></span>
+      <small>אוטומטי בכל push ל-master</small>
+    </div>
+    <div class="cell prod">
+      <strong>Vercel — Production</strong>
+      <span class="addr"><a href="https://vercel.com" target="_blank" rel="noopener">https://dental-track.vercel.app</a></span>
+      <small>Promote מ-Preview · Node 20.x</small>
     </div>
 
     <div class="role"></div>
-    <p class="down">↓<span>מתחבר למסד</span></p>
-    <p class="down">↓<span>מתחבר למסד</span></p>
+    <p class="down">↓<span>DATABASE_URL</span></p>
+    <p class="down">↓<span>DATABASE_URL (pgBouncer)</span></p>
+    <p class="down">↓<span>DATABASE_URL (pgBouncer)</span></p>
 
     <!-- Database -->
-    <div class="role">מסד<br/>נתונים</div>
+    <div class="role">Database<br/>PostgreSQL</div>
     <div class="cell local">
-      <strong>MongoDB Community</strong>
-      <span class="addr">mongodb://localhost:27017/dental-track</span>
-      <small>מותקן מקומית · חינם · seed ראשי + dummy</small>
-      <br/><small style="margin-top:6px">
-        <b>npm run seed</b> — users, lab, clinic<br/>
-        <b>npm run seed:dummy</b> — עבודות, הודעות, לוגים
+      <strong>Neon — branch: main</strong>
+      <span class="addr"><a href="https://console.neon.tech" target="_blank" rel="noopener">console.neon.tech</a></span>
+      <small>
+        <b>DATABASE_URL</b> — pooled (pgBouncer)<br/>
+        <b>DIRECT_URL</b> — direct (prisma db push)<br/>
+        Project: dental-track
       </small>
     </div>
-    <div class="cell prod planned">
-      <strong>MongoDB Atlas M0</strong>
-      <span class="addr"><a href="https://cloud.mongodb.com" target="_blank" rel="noopener">https://cloud.mongodb.com</a></span>
-      <small>Free Tier · 512MB · מגבלת 500 חיבורים · עתיד: M10 = $57/חודש</small>
+    <div class="cell dev">
+      <strong>Neon — branch: main</strong>
+      <span class="addr"><a href="https://console.neon.tech" target="_blank" rel="noopener">console.neon.tech</a></span>
+      <small>אותו connection string כמו LOCAL</small>
+    </div>
+    <div class="cell prod">
+      <strong>Neon — branch: prod</strong>
+      <span class="addr"><a href="https://console.neon.tech" target="_blank" rel="noopener">console.neon.tech</a></span>
+      <small>Branch נפרד · production data</small>
     </div>
 
     <div class="role"></div>
-    <p class="down">↓<span>קבצים לענן</span></p>
-    <p class="down">↓<span>קבצים לענן</span></p>
+    <p class="down">↓<span>R2_BUCKET_NAME</span></p>
+    <p class="down">↓<span>R2_BUCKET_NAME</span></p>
+    <p class="down">↓<span>R2_BUCKET_NAME</span></p>
 
     <!-- Storage -->
-    <div class="role">אחסון<br/>קבצים</div>
+    <div class="role">Storage<br/>קבצים</div>
     <div class="cell local">
-      <strong>Cloudinary (Free)</strong>
-      <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
-      <small>25 קרדיטים/חודש · 25GB · קובץ עד 50MB</small>
+      <strong>Cloudflare R2 — dental-track</strong>
+      <span class="addr"><a href="https://dash.cloudflare.com" target="_blank" rel="noopener">dash.cloudflare.com</a></span>
+      <small>prefix: <code>local/</code> · S3-compatible · Public URL</small>
     </div>
-    <div class="cell prod planned">
-      <strong>Cloudinary (Free / Plus)</strong>
-      <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
-      <small>אותו חשבון · Plus = $89/חודש אם יש צורך</small>
+    <div class="cell dev">
+      <strong>Cloudflare R2 — dental-track</strong>
+      <small>prefix: <code>dev/</code> · אותו bucket</small>
     </div>
-
-    <!-- Mobile -->
-    <div class="role">Mobile<br/>Android</div>
-    <div class="cell local">
-      <strong>Capacitor 7 — APK Debug</strong>
-      <span class="addr">il.dentaltrack.app</span>
-      <small>
-        npm run build:mobile → npx cap sync android<br/>
-        APK: <span class="code">android/app/build/outputs/apk/debug/app-debug.apk</span><br/>
-        API URL בטלפון: <span class="code">http://10.0.0.7:5051/api</span>
-      </small>
-    </div>
-    <div class="cell prod planned">
-      <strong>APK Release / Play Store</strong>
-      <span class="addr none">עתיד</span>
-      <small>Signing key + דמי רישום $25 חד-פעמי · Google Play Console</small>
+    <div class="cell prod">
+      <strong>Cloudflare R2 — dental-track</strong>
+      <small>prefix: <code>prod/</code> · אותו bucket</small>
     </div>
   </div>
 
   <!-- ══ 3. WORK ORDER FLOW ════════════════════════════════════════ -->
   <div class="flow-wrap">
-    <h2>🔄 זרימת עבודה — Work Order Stages</h2>
+    <h2>🔄 זרימת עבודה — Work Order Stages (11 שלבים)</h2>
     <div class="flow-stages">
       <div class="stage-box">
         <div class="stage-pill s1">📥 סריקה התקבלה<br/><small>scan_received</small></div>
@@ -371,7 +410,7 @@
       <div class="stage-arrow">→</div>
       <div class="stage-box">
         <div class="stage-pill s5">✅ אושר<br/><small>approved</small></div>
-        <small>ממשיך בייצור</small>
+        <small>ממשיך</small>
       </div>
       <div class="stage-arrow">→</div>
       <div class="stage-box">
@@ -391,7 +430,7 @@
       <div class="stage-arrow">→</div>
       <div class="stage-box">
         <div class="stage-pill s9">📦 מוכן למשלוח<br/><small>ready_to_ship</small></div>
-        <small>שליח מקבל התראה</small>
+        <small>שליח</small>
       </div>
       <div class="stage-arrow">→</div>
       <div class="stage-box">
@@ -407,7 +446,8 @@
 
     <div class="flow-note">
       ⚠️ אם הרופא <b>דוחה</b> בשלב "ממתין לאישור" — העבודה חוזרת אוטומטית ל-<b>cad_design</b> עם סיבת הדחייה.<br/>
-      🔔 Socket.io שולח real-time events בכל שינוי שלב: <span class="code">stage_updated</span> + <span class="code">notification</span> לרופא.
+      🔔 <b>ללא Socket.io</b> — עדכונים מגיעים דרך Polling: <code>GET /api/notifications</code> כל <b>4 שניות</b> · <code>GET /api/work-orders/mine</code> כל <b>10 שניות</b>.<br/>
+      📝 <code>stageHistory</code> ו-<code>files</code> שמורים כ-<b>Json columns</b> ב-PostgreSQL (אותה מבנה כמו MongoDB).
     </div>
   </div>
 
@@ -438,38 +478,57 @@
         <tr><td>העלאת קבצים / תמונות</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="no">❌</td><td class="ok">✅</td></tr>
         <tr><td>חתימה דיגיטלית</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td><td class="ok">✅</td></tr>
         <tr><td>צ'אט על עבודה</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td></tr>
+        <tr><td>notifications (polling)</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td></tr>
       </tbody>
     </table>
 
-    <h3>💰 חינם / תשלום</h3>
+    <h3>💰 עלויות — יעד ₪0/חודש</h3>
     <table>
       <thead>
-        <tr><th>שירות</th><th>תוכנית נוכחית</th><th>עלות</th><th>מגבלה / הערה</th></tr>
+        <tr><th>שירות</th><th>תוכנית</th><th>עלות</th><th>מגבלה / הערה</th></tr>
       </thead>
       <tbody>
-        <tr><td>MongoDB (LOCAL)</td><td>Community</td><td class="free">₪0</td><td>מקומי, ללא מגבלה</td></tr>
-        <tr><td>MongoDB Atlas (PROD)</td><td>M0 Free</td><td class="free">₪0</td><td>512MB · 500 חיבורים</td></tr>
-        <tr><td>Cloudinary</td><td>Free</td><td class="free">₪0</td><td>25 קרדיטים/חודש · 25GB</td></tr>
-        <tr><td>Render (Frontend + Backend)</td><td>Free</td><td class="free">₪0</td><td>Sleep אחרי 15 דק׳ חוסר פעילות</td></tr>
-        <tr><td>APK Debug</td><td>—</td><td class="free">₪0</td><td>לא דרוש Play Store</td></tr>
-        <tr><td>Google Play Store</td><td>חד-פעמי</td><td class="pay">₪75 ($25)</td><td>רק אם מפיצים לציבור</td></tr>
-        <tr><td>MongoDB Atlas M10</td><td>Paid (עתיד)</td><td class="pay">₪171 ($57)</td><td>אם M0 לא מספיק</td></tr>
-        <tr><td>Render Starter</td><td>Paid (עתיד)</td><td class="pay">₪21 ($7)</td><td>ללא sleep · SSD</td></tr>
-        <tr><td>Cloudinary Plus</td><td>Paid (עתיד)</td><td class="pay">₪267 ($89)</td><td>אם מעבר לקרדיטים</td></tr>
+        <tr><td>Vercel (Frontend + API)</td><td>Hobby Free</td><td class="free">₪0</td><td>100GB bandwidth · Serverless 10s timeout · SSR + Static</td></tr>
+        <tr><td>Neon PostgreSQL</td><td>Free Tier</td><td class="free">₪0</td><td>0.5GB storage · 191 compute hours/month · pgBouncer included</td></tr>
+        <tr><td>Cloudflare R2</td><td>Free Tier</td><td class="free">₪0</td><td>10GB storage · 1M Class A ops/month · 10M Class B ops/month</td></tr>
+        <tr><td>GitHub</td><td>Free</td><td class="free">₪0</td><td>Public repo</td></tr>
+        <tr style="background:#f0fdf4"><td><b>סה"כ נוכחי</b></td><td>—</td><td class="free"><b>₪0 / חודש</b></td><td>🎉</td></tr>
+        <tr style="opacity:0.7"><td>Vercel Pro (עתיד)</td><td>Pro</td><td class="pay">₪72 ($20)</td><td>אם צריך timeout > 10s / domain מותאם</td></tr>
+        <tr style="opacity:0.7"><td>Neon Scale (עתיד)</td><td>Scale</td><td class="pay">₪75 ($19)</td><td>אם מעל 0.5GB / scale to zero</td></tr>
+        <tr style="opacity:0.7"><td>Cloudflare R2 (עתיד)</td><td>Paid</td><td class="pay">~₪50</td><td>$0.015/GB/month מעל 10GB</td></tr>
       </tbody>
     </table>
 
-    <h3>🔑 פרטי כניסה לסביבה מקומית</h3>
+    <h3>🔑 פרטי כניסה (אחרי seed.js)</h3>
     <table>
       <thead>
         <tr><th>תפקיד</th><th>אימייל</th><th>סיסמה</th><th>מסך ראשי</th></tr>
       </thead>
       <tbody>
-        <tr><td>👑 Super Admin</td><td dir="ltr">admin@dentaltrack.co.il</td><td dir="ltr">admin123</td><td>/admin (Dashboard, Users, Labs, Subs, Logs, Health, Support)</td></tr>
-        <tr><td>👨‍⚕️ Doctor</td><td dir="ltr">doctor@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → DoctorDashboard</td></tr>
-        <tr><td>🏭 Lab Manager</td><td dir="ltr">labmanager@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → LabDashboard + /lab/stats</td></tr>
-        <tr><td>🔧 Technician</td><td dir="ltr">technician@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → TechnicianView</td></tr>
-        <tr><td>🚚 Courier</td><td dir="ltr">courier@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → CourierView</td></tr>
+        <tr><td>👑 Super Admin</td><td dir="ltr">admin@dentaltrack.co.il</td><td dir="ltr">admin123</td><td>/admin</td></tr>
+        <tr><td>🏭 Lab Manager</td><td dir="ltr">lab@dentaltrack.co.il</td><td dir="ltr">lab123</td><td>/dashboard + /lab/stats</td></tr>
+        <tr><td>🔧 Technician</td><td dir="ltr">tech@dentaltrack.co.il</td><td dir="ltr">tech123</td><td>/dashboard → TechnicianView</td></tr>
+        <tr><td>👨‍⚕️ Doctor</td><td dir="ltr">doctor@dentaltrack.co.il</td><td dir="ltr">doctor123</td><td>/dashboard → DoctorDashboard</td></tr>
+        <tr><td>🚚 Courier</td><td dir="ltr">courier@dentaltrack.co.il</td><td dir="ltr">courier123</td><td>/dashboard → CourierView</td></tr>
+      </tbody>
+    </table>
+
+    <h3>📋 Prisma Models → PostgreSQL Tables</h3>
+    <table>
+      <thead>
+        <tr><th>מודל</th><th>שדות מיוחדים</th><th>קשרים</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>User</b></td><td>role (enum), passwordHash, labId?, clinicId?</td><td>Lab, Clinic, WorkOrder×2, Message, Notification, AuditLog, SupportTicket</td></tr>
+        <tr><td><b>Lab</b></td><td>name, address, phone, email, isActive</td><td>User[], WorkOrder[], Subscription[]</td></tr>
+        <tr><td><b>Clinic</b></td><td>name, address, phone, email, isActive</td><td>User[], WorkOrder[], Subscription[]</td></tr>
+        <tr><td><b>WorkOrder</b></td><td>orderNumber (unique), currentStage, <b>stageHistory: Json</b>, <b>files: Json</b>, isDelayed, requiresDoctorApproval</td><td>doctor, clinic, lab, assignedTechnician?, Message[], Notification[]</td></tr>
+        <tr><td><b>Message</b></td><td>text, senderId</td><td>WorkOrder, sender (User)</td></tr>
+        <tr><td><b>Notification</b></td><td>type, title, body, read</td><td>User, WorkOrder?</td></tr>
+        <tr><td><b>AuditLog</b></td><td>action, target?, <b>meta: Json?</b>, ip?</td><td>actor (User?)</td></tr>
+        <tr><td><b>SupportTicket</b></td><td>subject, body, status, <b>replies: Json</b></td><td>from (User)</td></tr>
+        <tr><td><b>Subscription</b></td><td>plan, status, price, validUntil?, labId?, clinicId?</td><td>Lab?, Clinic?</td></tr>
+        <tr><td><b>ErrorLog</b></td><td>message, stack?, route?</td><td>—</td></tr>
       </tbody>
     </table>
 

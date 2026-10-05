@@ -1,112 +1,53 @@
-# עלויות תפעול — DentalTrack
+# עלויות — DentalTrack
 
-עודכן: **2026-10-05**
-פירוט דיאגרמה: [`../diagrams-environments.md`](../diagrams-environments.md)
-
----
-
-## תעריפים חיים (לעדכן תמיד)
-
-| שירות | תוכנית | USD/חודש | ₪/חודש | מי משלם |
-|---|---|---|---|---|
-| MongoDB (LOCAL) | Community | $0 | ₪0 | — |
-| MongoDB Atlas (PROD) | M0 Free Tier | $0 | ₪0 | מפעיל המערכת |
-| MongoDB Atlas (PROD) | M10 (אם גדלים) | $57 | ₪171 | מפעיל המערכת |
-| Cloudinary | Free | $0 | ₪0 | מפעיל המערכת |
-| Cloudinary | Plus | $89 | ₪267 | מפעיל המערכת |
-| Render (Web Service) | Free | $0 | ₪0 | מפעיל המערכת |
-| Render (Web Service) | Starter | $7 | ₪21 | מפעיל המערכת |
-| Google Play Store | חד-פעמי | $25 | ₪75 | מפעיל המערכת |
-| Apple App Store | שנתי | $99 | ₪297 | מפעיל המערכת |
-
-שער: ≈ ₪3.0 ל-$1
+> **יעד: ₪0 / חודש** — כל השירותים בתוכנית חינמית.
+> עדכון אחרון: אוקטובר 2026
 
 ---
 
-## תוכנית חינם — מגבלות
+## עלויות נוכחיות
 
-### MongoDB Atlas M0
-| מגבלה | ערך |
-|---|---|
-| אחסון | 512MB |
-| עבודות (WorkOrders) | ~50,000 רשומות |
-| חיבורים בו-זמנית | 500 |
-| Shared cluster | כן — ביצועים לא מובטחים |
-
-### Cloudinary Free
-| מגבלה | ערך |
-|---|---|
-| קרדיטים/חודש | 25 |
-| אחסון | 25GB |
-| Bandwidth | 25GB/חודש |
-| קובץ מקסימלי | 10MB |
-
-> **קרדיט Cloudinary:** העלאת תמונה 1MB ≈ 0.02 קרדיטים. 25 קרדיטים ≈ 1,250 העלאות בחודש.
-
-### Render Free
-| מגבלה | ערך |
-|---|---|
-| Sleep | אחרי 15 דקות חוסר פעילות |
-| Cold start | 30-60 שניות |
-| Bandwidth | 100GB/חודש |
-| Build minutes | 500/חודש |
+| שירות | תוכנית | עלות/חודש | מגבלה |
+|---|---|---|---|
+| **Vercel** (Frontend + API Serverless) | Hobby Free | **₪0** | 100GB bandwidth · Serverless timeout 10s |
+| **Neon** (PostgreSQL) | Free Tier | **₪0** | 0.5GB storage · 191 compute hours/month · pgBouncer included |
+| **Cloudflare R2** (קבצים) | Free Tier | **₪0** | 10GB storage · 1M Class A ops · 10M Class B ops/month |
+| **GitHub** (קוד) | Free | **₪0** | Public repository |
+| **סה"כ** | | **₪0** | 🎉 |
 
 ---
 
-## עלות לפי פעולה
+## עלויות עתידיות (כשהפרויקט יגדל)
 
-| פעולה | עלות |
-|---|---|
-| יצירת עבודה חדשה | ₪0 |
-| קידום שלב | ₪0 |
-| העלאת קובץ / תמונה (Cloudinary) | ₪0 (בתוך מכסה חינם) |
-| שליחת הודעת Socket.io | ₪0 |
-| התראה (Notification) | ₪0 |
-
-> DentalTrack **אינה** משתמשת ב-WhatsApp API, SMS, או תשלומים — אין עלויות per-message.
+| שירות | תוכנית | עלות | מתי לשדרג |
+|---|---|---|---|
+| Vercel Pro | Pro | $20/חודש (~₪72) | אם צריך timeout > 10s, domain מותאם, analytics |
+| Neon Scale | Scale | $19/חודש (~₪69) | אם מעל 0.5GB storage או > 191 compute hours |
+| Cloudflare R2 | Paid | $0.015/GB/חודש | מעל 10GB storage |
+| Neon Postgres Replica | Scale | $29/חודש | אם צריך read replicas |
 
 ---
 
-## סיכום חודשי — תרחישים
+## השוואה — לפני ואחרי
 
-### תרחיש 1: מעבדה קטנה (עד 200 עבודות/חודש)
-| שירות | עלות |
-|---|---|
-| MongoDB Atlas M0 | ₪0 |
-| Cloudinary Free | ₪0 |
-| Render Free | ₪0 |
-| **סה"כ** | **₪0/חודש** |
-
-### תרחיש 2: מעבדה בינונית (עד 2,000 עבודות/חודש)
-| שירות | עלות |
-|---|---|
-| MongoDB Atlas M10 | ₪171 |
-| Cloudinary Free | ₪0 |
-| Render Starter | ₪21 |
-| **סה"כ** | **₪192/חודש** |
-
-### תרחיש 3: הפצה ב-Play Store (חד-פעמי)
-| הוצאה | עלות |
-|---|---|
-| דמי רישום Google Play | ₪75 (חד-פעמי) |
-| Signing key (APK release) | ₪0 |
-| **סה"כ** | **₪75 פעם אחת** |
+| שירות | לפני (ספטמבר 2026) | אחרי (אוקטובר 2026) | חסכון |
+|---|---|---|---|
+| Database | MongoDB Atlas M0 | Neon Free | שקול |
+| Storage | Cloudinary Free | Cloudflare R2 Free | R2: יותר נדיב (10GB vs 25 credits) |
+| Hosting Backend | Render Free (sleep 15 min) | Vercel Serverless | Vercel: אין sleep, תגובה מיידית |
+| Hosting Frontend | Render Free | Vercel | אותו מחיר |
+| Real-time | Socket.io (Render) | HTTP Polling (Vercel) | חסכון בזיכרון |
+| Mobile | Capacitor / APK | Web Responsive | חסכון בפיתוח |
 
 ---
 
-## מעקב שימוש — היכן לבדוק
+## היסטוריית שינויים
 
-| שירות | לינק לדשבורד |
-|---|---|
-| MongoDB Atlas | https://cloud.mongodb.com |
-| Cloudinary | https://console.cloudinary.com |
-| Render | https://dashboard.render.com |
-| Google Play Console | https://play.google.com/console |
-
----
-
-## היסטוריית עדכוני תעריפים
-
-| תאריך | שינוי |
-|---|---|
-| 2026-10-05 | נוצר קובץ, תעריפים נוכחיים לפי Free tier |
+| תאריך | שירות | שינוי | עלות |
+|---|---|---|---|
+| ספטמבר 2026 | MongoDB Atlas | M0 Free tier | $0 |
+| ספטמבר 2026 | Cloudinary | Free (25 credits/month) | $0 |
+| ספטמבר 2026 | Render | Free tier (backend + frontend) | $0 |
+| אוקטובר 2026 | Neon | החליף MongoDB Atlas · Free tier | $0 |
+| אוקטובר 2026 | Cloudflare R2 | החליף Cloudinary · Free tier | $0 |
+| אוקטובר 2026 | Vercel | החליף Render · Hobby Free | $0 |
