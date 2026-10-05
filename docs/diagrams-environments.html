@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>דיאגרמת סביבות — DentalTrack</title>
+  <style>
+    :root {
+      --local: #1e40af;
+      --local-bg: #dbeafe;
+      --prod: #334155;
+      --prod-bg: #e2e8f0;
+      --share: #0369a1;
+      --share-bg: #e0f2fe;
+      --accent: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; flex-wrap: wrap; align-items: center;
+      justify-content: space-between; gap: 12px;
+      padding: 12px 20px;
+      background: #0f172a; color: #fff;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header a { color: #93c5fd; }
+    .hint { width: 100%; margin: 0; color: #cbd5e1; font-size: 0.9rem; }
+    .zoom-bar { display: flex; align-items: center; gap: 8px; }
+    .zoom-bar button {
+      min-width: 44px; height: 40px; border: 0; border-radius: 8px;
+      background: #38bdf8; color: #0f172a;
+      font-size: 1.2rem; font-weight: 800; cursor: pointer;
+    }
+    .stage { overflow: auto; height: calc(100vh - 90px); padding: 20px; }
+    .poster { transform-origin: top right; width: 1560px; }
+
+    /* ── ENV GRID ─────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr;
+      gap: 0 12px;
+      background: #fff;
+      border: 3px solid #64748b;
+      border-radius: 14px;
+      padding: 16px 16px 8px;
+      margin-bottom: 20px;
+    }
+    .role {
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; font-weight: 800; font-size: 1.05rem;
+      background: #0f172a; color: #fff;
+      border-radius: 10px; padding: 10px 8px; margin: 6px 0;
+    }
+    .head, .cell, .span {
+      border-radius: 12px; padding: 12px 14px 10px;
+      margin: 6px 0; border: 3px solid #94a3b8;
+    }
+    .head { text-align: center; font-weight: 800; font-size: 1.25rem; }
+    .head small, .cell small { display: block; font-weight: 600; font-size: 0.88rem; margin-top: 5px; }
+    .local { background: var(--local-bg); border-color: var(--local); }
+    .prod  { background: var(--prod-bg);  border-color: var(--prod); }
+    .share { background: var(--share-bg); border-color: var(--share); }
+    .planned { opacity: 0.75; border-style: dashed; }
+    .span { grid-column: 2 / 4; text-align: center; font-weight: 700; }
+    .span .title { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+    .down {
+      text-align: center; font-size: 1.6rem; font-weight: 800;
+      color: #0f172a; line-height: 1; margin: 0; padding: 0;
+    }
+    .down span { display: block; font-size: 0.8rem; font-weight: 700; color: #475569; }
+    .addr {
+      display: block; direction: ltr; unicode-bidi: isolate;
+      font-family: Consolas, monospace; font-size: 0.78rem;
+      font-weight: 600; margin-top: 5px; word-break: break-all;
+    }
+    .addr a, table a { color: #075985; }
+    .code { direction: ltr; unicode-bidi: isolate; font-family: Consolas, monospace; }
+    .none { color: #64748b; font-weight: 700; }
+
+    /* ── FLOW DIAGRAM ─────────────────────────────────── */
+    .flow-wrap {
+      background: #fff; border: 2px solid #94a3b8;
+      border-radius: 16px; padding: 22px 24px 28px;
+      margin-bottom: 20px;
+    }
+    .flow-wrap h2 { margin: 0 0 16px; font-size: 1.3rem; }
+    .flow-stages {
+      display: flex; flex-wrap: wrap; gap: 0; align-items: center;
+    }
+    .stage-box {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; flex: 1; min-width: 110px;
+    }
+    .stage-pill {
+      padding: 8px 12px; border-radius: 999px;
+      font-weight: 700; font-size: 0.85rem; text-align: center;
+      white-space: nowrap; width: 100%; text-align: center;
+    }
+    .stage-arrow {
+      font-size: 1.8rem; font-weight: 900; color: #475569;
+      display: flex; align-items: center; padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .s1  { background: #e5e7eb; color: #374151; }
+    .s2  { background: #dbeafe; color: #1e40af; }
+    .s3  { background: #e0e7ff; color: #3730a3; }
+    .s4  { background: #fef08a; color: #854d0e; }
+    .s5  { background: #d1fae5; color: #065f46; }
+    .s6  { background: #cffafe; color: #155e75; }
+    .s7  { background: #ede9fe; color: #5b21b6; }
+    .s8  { background: #ffedd5; color: #9a3412; }
+    .s9  { background: #ccfbf1; color: #134e4a; }
+    .s10 { background: #fce7f3; color: #9d174d; }
+    .s11 { background: #dcfce7; color: #14532d; }
+
+    .flow-note {
+      margin-top: 14px; padding: 10px 14px;
+      background: #fef9c3; border: 2px solid #ca8a04;
+      border-radius: 10px; font-size: 0.9rem; font-weight: 600;
+    }
+
+    /* ── ROLES TABLE ──────────────────────────────────── */
+    .tables { width: 1560px; }
+    table {
+      width: 100%; border-collapse: collapse;
+      background: #fff; font-size: 1rem;
+      border-radius: 12px; overflow: hidden;
+      border: 2px solid #94a3b8; margin-bottom: 20px;
+    }
+    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: right; vertical-align: top; }
+    th { background: #e2e8f0; font-weight: 800; }
+    h3 { margin: 20px 0 8px; font-size: 1.2rem; }
+    .ok  { color: #15803d; font-weight: 800; }
+    .no  { color: #b45309; font-weight: 800; }
+    .free { color: #15803d; font-weight: 800; }
+    .pay  { color: #9a3412; font-weight: 800; }
+    .tbd  { color: #64748b; font-weight: 700; }
+
+    /* ── ARCH DIAGRAM ─────────────────────────────────── */
+    .arch {
+      background: #fff; border: 2px solid #94a3b8;
+      border-radius: 16px; padding: 22px 24px 28px;
+      margin-bottom: 20px;
+    }
+    .arch h2 { margin: 0 0 16px; font-size: 1.3rem; }
+    .arch-cols {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px; align-items: start;
+    }
+    .arch-box {
+      border: 3px solid #0f172a; border-radius: 14px;
+      padding: 16px 16px 14px; background: #f8fafc;
+    }
+    .arch-box strong { display: block; font-size: 1.1rem; margin-bottom: 8px; }
+    .arch-box ul { margin: 0; padding-right: 18px; font-size: 0.88rem; line-height: 1.7; }
+    .arch-clients { background: #dbeafe; border-color: #1e40af; }
+    .arch-backend { background: #fef08a; border-color: #854d0e; }
+    .arch-db      { background: #d1fae5; border-color: #065f46; }
+    .arch-cloud   { background: #fce7f3; border-color: #9d174d; }
+    .arch-arrow {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; font-weight: 900; color: #334155;
+      padding-top: 40px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🦷 דיאגרמת סביבות — DentalTrack</h1>
+    <p class="hint">
+      ארכיטקטורה · זרימת עבודה · הרשאות · סביבות · עלויות ·
+      <a href="tasks/environments.md">environments.md</a> ·
+      <a href="tasks/costs.md">costs.md</a>
+    </p>
+  </div>
+  <div class="zoom-bar">
+    <button id="zoomOut">−</button>
+    <strong id="zoomLabel">100%</strong>
+    <button id="zoomIn">+</button>
+    <button id="zoomReset" style="min-width:auto;padding:0 14px;font-size:1rem">איפוס</button>
+  </div>
+</header>
+
+<div class="stage" id="stage">
+<div class="poster" id="poster">
+
+  <!-- ══ 1. ARCHITECTURE ══════════════════════════════════════════ -->
+  <div class="arch">
+    <h2>📐 ארכיטקטורת המערכת</h2>
+    <div class="arch-cols">
+
+      <div class="arch-box arch-clients">
+        <strong>🖥️ Clients</strong>
+        <ul>
+          <li><b>Web Browser</b><br/>React 18 + Vite<br/><span class="addr">http://localhost:5174</span></li>
+          <li style="margin-top:10px"><b>Android App</b><br/>Capacitor 7 (WebView)<br/><span class="addr">il.dentaltrack.app</span></li>
+        </ul>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-box arch-backend">
+        <strong>⚙️ Backend (Express)</strong>
+        <ul>
+          <li><span class="code">/api/auth</span> — JWT login</li>
+          <li><span class="code">/api/work-orders</span> — CRUD + stages</li>
+          <li><span class="code">/api/work-orders/stats</span> — סטטיסטיקות</li>
+          <li><span class="code">/api/messages</span> — צ'אט</li>
+          <li><span class="code">/api/admin</span> — Super admin</li>
+          <li style="margin-top:6px"><b>Socket.io</b><br/>new_order · stage_updated<br/>notification · message</li>
+        </ul>
+        <span class="addr">http://localhost:5051</span>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-box arch-db">
+        <strong>🗄️ MongoDB</strong>
+        <ul>
+          <li>workorders</li>
+          <li>users</li>
+          <li>labs · clinics</li>
+          <li>messages</li>
+          <li>notifications</li>
+          <li>auditlogs</li>
+          <li>subscriptions</li>
+          <li>supporttickets</li>
+          <li>errorlogs</li>
+        </ul>
+        <span class="addr">mongodb://localhost:27017/dental-track</span>
+      </div>
+
+    </div>
+
+    <!-- Cloudinary row -->
+    <div style="display:flex;align-items:center;gap:16px;margin-top:16px;">
+      <div class="arch-box arch-cloud" style="flex:1">
+        <strong>☁️ Cloudinary (קבצים ותמונות)</strong>
+        <ul>
+          <li><span class="code">dental-track/orders/</span> — קבצי עבודות (STL, PDF, תמונות)</li>
+          <li><span class="code">dental-track/stage-images/</span> — תמונות שלבים</li>
+          <li>מגבלת קובץ: 50MB · תמיכה: כל סוג קובץ</li>
+        </ul>
+        <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 2. ENV GRID ═══════════════════════════════════════════════ -->
+  <div class="grid">
+    <div class="role">תפקיד</div>
+    <div class="head local">LOCAL<small>פיתוח יומיומי · המחשב שלך</small></div>
+    <div class="head prod planned">PRODUCTION<small>עתידי · Render · MongoDB Atlas</small></div>
+
+    <!-- Git -->
+    <div class="role">Git<br/>קוד משותף</div>
+    <div class="span share">
+      <div class="title">Git Repository — קוד הפרויקט</div>
+      <small>dental-track/ · Frontend + Backend + Android + docs. בלי נתוני מסד ובלי קבצי .env</small>
+    </div>
+
+    <div class="role"></div>
+    <p class="down">↓<span>מריץ מקומית</span></p>
+    <p class="down">↓<span>עתיד: Render auto-deploy</span></p>
+
+    <!-- Pipeline -->
+    <div class="role">Pipeline<br/>הרצת קוד</div>
+    <div class="cell local">
+      <strong>npm run dev (Frontend)</strong>
+      <span class="addr">http://localhost:5174</span>
+      <small>Vite dev server · HMR · TypeScript</small>
+      <br/><strong>npm run dev (Backend)</strong>
+      <span class="addr">http://localhost:5051</span>
+      <small>nodemon · hot reload</small>
+    </div>
+    <div class="cell prod planned">
+      <strong>Render Web Service</strong>
+      <span class="addr"><a href="https://dashboard.render.com" target="_blank" rel="noopener">https://dashboard.render.com</a></span>
+      <small>render.yaml מוגדר · auto-deploy מ-git · Free tier: sleep אחרי 15 דק׳</small>
+    </div>
+
+    <div class="role"></div>
+    <p class="down">↓<span>מתחבר למסד</span></p>
+    <p class="down">↓<span>מתחבר למסד</span></p>
+
+    <!-- Database -->
+    <div class="role">מסד<br/>נתונים</div>
+    <div class="cell local">
+      <strong>MongoDB Community</strong>
+      <span class="addr">mongodb://localhost:27017/dental-track</span>
+      <small>מותקן מקומית · חינם · seed ראשי + dummy</small>
+      <br/><small style="margin-top:6px">
+        <b>npm run seed</b> — users, lab, clinic<br/>
+        <b>npm run seed:dummy</b> — עבודות, הודעות, לוגים
+      </small>
+    </div>
+    <div class="cell prod planned">
+      <strong>MongoDB Atlas M0</strong>
+      <span class="addr"><a href="https://cloud.mongodb.com" target="_blank" rel="noopener">https://cloud.mongodb.com</a></span>
+      <small>Free Tier · 512MB · מגבלת 500 חיבורים · עתיד: M10 = $57/חודש</small>
+    </div>
+
+    <div class="role"></div>
+    <p class="down">↓<span>קבצים לענן</span></p>
+    <p class="down">↓<span>קבצים לענן</span></p>
+
+    <!-- Storage -->
+    <div class="role">אחסון<br/>קבצים</div>
+    <div class="cell local">
+      <strong>Cloudinary (Free)</strong>
+      <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
+      <small>25 קרדיטים/חודש · 25GB · קובץ עד 50MB</small>
+    </div>
+    <div class="cell prod planned">
+      <strong>Cloudinary (Free / Plus)</strong>
+      <span class="addr"><a href="https://console.cloudinary.com" target="_blank" rel="noopener">https://console.cloudinary.com</a></span>
+      <small>אותו חשבון · Plus = $89/חודש אם יש צורך</small>
+    </div>
+
+    <!-- Mobile -->
+    <div class="role">Mobile<br/>Android</div>
+    <div class="cell local">
+      <strong>Capacitor 7 — APK Debug</strong>
+      <span class="addr">il.dentaltrack.app</span>
+      <small>
+        npm run build:mobile → npx cap sync android<br/>
+        APK: <span class="code">android/app/build/outputs/apk/debug/app-debug.apk</span><br/>
+        API URL בטלפון: <span class="code">http://10.0.0.7:5051/api</span>
+      </small>
+    </div>
+    <div class="cell prod planned">
+      <strong>APK Release / Play Store</strong>
+      <span class="addr none">עתיד</span>
+      <small>Signing key + דמי רישום $25 חד-פעמי · Google Play Console</small>
+    </div>
+  </div>
+
+  <!-- ══ 3. WORK ORDER FLOW ════════════════════════════════════════ -->
+  <div class="flow-wrap">
+    <h2>🔄 זרימת עבודה — Work Order Stages</h2>
+    <div class="flow-stages">
+      <div class="stage-box">
+        <div class="stage-pill s1">📥 סריקה התקבלה<br/><small>scan_received</small></div>
+        <small>רופא שולח</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s2">📂 עבודה נפתחה<br/><small>order_opened</small></div>
+        <small>מעבדה פותחת</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s3">🖥️ תכנון CAD<br/><small>cad_design</small></div>
+        <small>טכנאי</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s4">⏳ ממתין לאישור<br/><small>awaiting_approval</small></div>
+        <small>רופא מאשר/דוחה</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s5">✅ אושר<br/><small>approved</small></div>
+        <small>ממשיך בייצור</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s6">🏭 בייצור<br/><small>manufacturing</small></div>
+        <small>טכנאי</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s7">🎨 גימור<br/><small>finishing</small></div>
+        <small>טכנאי</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s8">🔍 בקרת איכות<br/><small>quality_check</small></div>
+        <small>מנהל מעבדה</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s9">📦 מוכן למשלוח<br/><small>ready_to_ship</small></div>
+        <small>שליח מקבל התראה</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s10">🚚 אצל שליח<br/><small>with_courier</small></div>
+        <small>שליח</small>
+      </div>
+      <div class="stage-arrow">→</div>
+      <div class="stage-box">
+        <div class="stage-pill s11">🏥 נמסר למרפאה<br/><small>delivered</small></div>
+        <small>סיום · חתימה</small>
+      </div>
+    </div>
+
+    <div class="flow-note">
+      ⚠️ אם הרופא <b>דוחה</b> בשלב "ממתין לאישור" — העבודה חוזרת אוטומטית ל-<b>cad_design</b> עם סיבת הדחייה.<br/>
+      🔔 Socket.io שולח real-time events בכל שינוי שלב: <span class="code">stage_updated</span> + <span class="code">notification</span> לרופא.
+    </div>
+  </div>
+
+  <!-- ══ 4. TABLES ═════════════════════════════════════════════════ -->
+  <div class="tables">
+
+    <h3>🔐 הרשאות לפי תפקיד</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>פעולה</th>
+          <th>👨‍⚕️ doctor</th>
+          <th>🏭 lab_manager</th>
+          <th>🔧 technician</th>
+          <th>🚚 courier</th>
+          <th>👑 super_admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>יצירת עבודה חדשה</td><td class="ok">✅</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>אישור / דחיית עבודה</td><td class="ok">✅</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>קידום שלב</td><td class="no">❌</td><td class="ok">✅</td><td class="ok">✅</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>הקצאת טכנאי</td><td class="no">❌</td><td class="ok">✅</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>ראיית כל עבודות המעבדה</td><td class="no">❌</td><td class="ok">✅</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>עבודות שליח בלבד (ready/courier)</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td><td class="ok">✅</td></tr>
+        <tr><td>סטטיסטיקות מעבדה (/lab/stats)</td><td class="no">❌</td><td class="ok">✅</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>ממשק Admin (/admin)</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>העלאת קבצים / תמונות</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="no">❌</td><td class="ok">✅</td></tr>
+        <tr><td>חתימה דיגיטלית</td><td class="no">❌</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td><td class="ok">✅</td></tr>
+        <tr><td>צ'אט על עבודה</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td></tr>
+      </tbody>
+    </table>
+
+    <h3>💰 חינם / תשלום</h3>
+    <table>
+      <thead>
+        <tr><th>שירות</th><th>תוכנית נוכחית</th><th>עלות</th><th>מגבלה / הערה</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MongoDB (LOCAL)</td><td>Community</td><td class="free">₪0</td><td>מקומי, ללא מגבלה</td></tr>
+        <tr><td>MongoDB Atlas (PROD)</td><td>M0 Free</td><td class="free">₪0</td><td>512MB · 500 חיבורים</td></tr>
+        <tr><td>Cloudinary</td><td>Free</td><td class="free">₪0</td><td>25 קרדיטים/חודש · 25GB</td></tr>
+        <tr><td>Render (Frontend + Backend)</td><td>Free</td><td class="free">₪0</td><td>Sleep אחרי 15 דק׳ חוסר פעילות</td></tr>
+        <tr><td>APK Debug</td><td>—</td><td class="free">₪0</td><td>לא דרוש Play Store</td></tr>
+        <tr><td>Google Play Store</td><td>חד-פעמי</td><td class="pay">₪75 ($25)</td><td>רק אם מפיצים לציבור</td></tr>
+        <tr><td>MongoDB Atlas M10</td><td>Paid (עתיד)</td><td class="pay">₪171 ($57)</td><td>אם M0 לא מספיק</td></tr>
+        <tr><td>Render Starter</td><td>Paid (עתיד)</td><td class="pay">₪21 ($7)</td><td>ללא sleep · SSD</td></tr>
+        <tr><td>Cloudinary Plus</td><td>Paid (עתיד)</td><td class="pay">₪267 ($89)</td><td>אם מעבר לקרדיטים</td></tr>
+      </tbody>
+    </table>
+
+    <h3>🔑 פרטי כניסה לסביבה מקומית</h3>
+    <table>
+      <thead>
+        <tr><th>תפקיד</th><th>אימייל</th><th>סיסמה</th><th>מסך ראשי</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>👑 Super Admin</td><td dir="ltr">admin@dentaltrack.co.il</td><td dir="ltr">admin123</td><td>/admin (Dashboard, Users, Labs, Subs, Logs, Health, Support)</td></tr>
+        <tr><td>👨‍⚕️ Doctor</td><td dir="ltr">doctor@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → DoctorDashboard</td></tr>
+        <tr><td>🏭 Lab Manager</td><td dir="ltr">labmanager@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → LabDashboard + /lab/stats</td></tr>
+        <tr><td>🔧 Technician</td><td dir="ltr">technician@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → TechnicianView</td></tr>
+        <tr><td>🚚 Courier</td><td dir="ltr">courier@demo.co.il</td><td dir="ltr">demo123</td><td>/dashboard → CourierView</td></tr>
+      </tbody>
+    </table>
+
+  </div><!-- /tables -->
+
+</div><!-- /poster -->
+</div><!-- /stage -->
+
+<script>
+  let scale = 1;
+  const poster = document.getElementById('poster');
+  const label  = document.getElementById('zoomLabel');
+  function applyZoom() {
+    poster.style.transform = `scale(${scale})`;
+    label.textContent = Math.round(scale * 100) + '%';
+  }
+  document.getElementById('zoomIn').addEventListener('click',    () => { scale = Math.min(scale + 0.1, 3);   applyZoom(); });
+  document.getElementById('zoomOut').addEventListener('click',   () => { scale = Math.max(scale - 0.1, 0.3); applyZoom(); });
+  document.getElementById('zoomReset').addEventListener('click', () => { scale = 1; applyZoom(); });
+</script>
+</body>
+</html>

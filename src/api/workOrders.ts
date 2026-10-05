@@ -34,3 +34,15 @@ export const uploadStageImages = (id: string, data: FormData) =>
 
 export const saveSignature = (id: string, signature: string) =>
   api.patch<WorkOrder>(`/work-orders/${id}/signature`, { signature }).then((r) => r.data)
+
+export const getLabStats = () =>
+  api.get<{
+    total: number
+    open: number
+    delayed: number
+    delivered: number
+    byStage: { _id: string; count: number }[]
+    byType: { _id: string; count: number }[]
+    byMonth: { month: string; count: number }[]
+    byTech: { _id: string; name: string; orders: number; delayed: number }[]
+  }>('/work-orders/stats').then((r) => r.data)

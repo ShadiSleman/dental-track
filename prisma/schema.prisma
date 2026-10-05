@@ -1,0 +1,190 @@
+// ──────────────────────────────────────────────────────────────────────────────
+// DentalTrack — Prisma Schema (PostgreSQL / Neon)
+// ──────────────────────────────────────────────────────────────────────────────
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  doctor
+  lab_manager
+  technician
+  courier
+  super_admin
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Lab {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  workOrders    WorkOrder[]
+  subscriptions Subscription[]
+}
+
+model Clinic {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  workOrders    WorkOrder[]
+  subscriptions Subscription[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  phone        String?
+  role         Role
+  avatarUrl    String?
+  labId        String?
+  clinicId     String?
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lab    Lab?    @relation(fields: [labId], references: [id])
+  clinic Clinic? @relation(fields: [clinicId], references: [id])
+
+  doctorOrders       WorkOrder[]     @relation("DoctorOrders")
+  techOrders         WorkOrder[]     @relation("TechOrders")
+  messages           Message[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  supportTickets     SupportTicket[]
+}
+
+model WorkOrder {
+  id                     String    @id @default(cuid())
+  orderNumber            String    @unique
+  patientCode            String
+  workType               String
+  currentStage           String    @default("scan_received")
+  dueDate                DateTime?
+  notes                  String?
+  returnReason           String?
+  requiresDoctorApproval Boolean   @default(false)
+  isDelayed              Boolean   @default(false)
+  signature              String?
+
+  // JSON arrays — keep same shape as MongoDB to avoid frontend rewrites
+  stageHistory Json @default("[]")
+  files        Json @default("[]")
+
+  doctorId             String
+  clinicId             String
+  labId                String
+  assignedTechnicianId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor             User     @relation("DoctorOrders", fields: [doctorId], references: [id])
+  clinic             Clinic   @relation(fields: [clinicId], references: [id])
+  lab                Lab      @relation(fields: [labId], references: [id])
+  assignedTechnician User?    @relation("TechOrders", fields: [assignedTechnicianId], references: [id])
+
+  messages      Message[]
+  notifications Notification[]
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  workOrderId String
+  senderId    String
+  text        String
+  createdAt   DateTime @default(now())
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  sender    User      @relation(fields: [senderId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  workOrderId String?
+  type        String
+  title       String
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  fromId    String
+  subject   String
+  body      String
+  status    String   @default("open")
+  replies   Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  from User @relation(fields: [fromId], references: [id])
+}
+
+model Subscription {
+  id         String    @id @default(cuid())
+  labId      String?
+  clinicId   String?
+  plan       String    @default("lab_basic")
+  status     String    @default("active")
+  price      Float     @default(0)
+  validUntil DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  lab    Lab?    @relation(fields: [labId], references: [id])
+  clinic Clinic? @relation(fields: [clinicId], references: [id])
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  route     String?
+  createdAt DateTime @default(now())
+}

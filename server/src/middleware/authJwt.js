@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const jwt    = require('jsonwebtoken')
+const prisma = require('../lib/prisma')
 
 const authJwt = async (req, res, next) => {
   const header = req.headers.authorization
@@ -8,9 +8,17 @@ const authJwt = async (req, res, next) => {
   }
   try {
     const payload = jwt.verify(header.slice(7), process.env.JWT_SECRET)
-    const user = await User.findById(payload.sub).select('-passwordHash')
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true, name: true, email: true, phone: true,
+        role: true, avatarUrl: true, labId: true, clinicId: true,
+        isActive: true, lastLogin: true, createdAt: true, updatedAt: true,
+      },
+    })
     if (!user || !user.isActive) return res.status(401).json({ error: 'Unauthorized' })
-    req.user = user
+    // Expose _id for backward compatibility
+    req.user = { ...user, _id: user.id }
     next()
   } catch {
     res.status(401).json({ error: 'Invalid token' })

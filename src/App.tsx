@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
-import { useSocket } from './hooks/useSocket'
+import { usePolling } from './hooks/usePolling'
 import AppLayout from './components/AppLayout'
 
 import LoginPage from './pages/LoginPage'
@@ -10,6 +10,7 @@ import TechnicianView from './pages/TechnicianView'
 import CourierView from './pages/CourierView'
 import WorkOrderDetail from './pages/WorkOrderDetail'
 import NewWorkOrder from './pages/NewWorkOrder'
+import LabStats from './pages/LabStats'
 
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -21,7 +22,7 @@ import AdminHealth from './pages/admin/AdminHealth'
 import AdminSupport from './pages/admin/AdminSupport'
 
 function ProtectedApp() {
-  useSocket()
+  usePolling()
   const user = useAuthStore((s) => s.user)
 
   const dashboardRoute = () => {
@@ -38,6 +39,7 @@ function ProtectedApp() {
     <AppLayout>
       <Routes>
         <Route path="/dashboard" element={dashboardRoute()} />
+        <Route path="/lab/stats" element={<LabStats />} />
         <Route path="/orders/new" element={<NewWorkOrder />} />
         <Route path="/orders/:id" element={<WorkOrderDetail />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
