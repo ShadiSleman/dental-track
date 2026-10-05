@@ -35,3 +35,6 @@
 | vercel.json | routing /api/* + /* |
 | .env.example | עודכן לכל משתני הסביבה החדשים |
 | docs/ | עודכנו כל קבצי התיעוד |
+| Neon PostgreSQL | prisma db push הצליח, seed רץ |
+| Vercel deploy | 6 ENV vars + Production build ✅ |
+| ChatPanel | הוחלף useSocket ב-setInterval polling |

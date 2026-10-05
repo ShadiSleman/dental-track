@@ -17,6 +17,9 @@
 - [x] GitHub repo: https://github.com/ShadiSleman/dental-track
 - [x] usePolling hook (מחליף useSocket)
 - [x] seed.js + seedDummy.js עם Prisma
+- [x] Neon PostgreSQL — project `bitter-sea-76544202`, prisma db push ✅
+- [x] Vercel deploy — Production build **Ready** ✅
+- [x] ChatPanel — הוחלף useSocket ב-setInterval polling
 
 ### פיצ'רים
 - [x] כל 11 שלבי עבודה (scan_received → delivered)
@@ -32,29 +35,21 @@
 
 ## 🔲 נשאר לעשות
 
-### חובה (לפני production)
+### חובה (לפני מעבר מלא)
 
-1. **Neon Setup**
-   - [ ] צור project `dental-track` ב-console.neon.tech
-   - [ ] צור branch `prod` לייצור
-   - [ ] Copy connection strings → הכנס ל-.env
-
-2. **R2 Setup**
+1. **Cloudflare R2 Setup** (נדרש לupload קבצים)
    - [ ] יצור bucket `dental-track` ב-dash.cloudflare.com
-   - [ ] יצור R2 API token
+   - [ ] יצור R2 API token (R2 permissions)
    - [ ] הפעל Public Access על הbucket
-   - [ ] Copy credentials → הכנס ל-.env
+   - [ ] עדכן `.env` + Vercel env vars:
+     - `R2_ACCOUNT_ID`
+     - `R2_ACCESS_KEY_ID`
+     - `R2_SECRET_ACCESS_KEY`
+     - `R2_PUBLIC_URL`
 
-3. **prisma db push**
-   ```bash
-   npx prisma db push
-   node server/src/scripts/seed.js
-   ```
-
-4. **Vercel Deploy**
-   - [ ] חבר GitHub repo ל-Vercel
-   - [ ] הכנס כל ENV vars ב-Vercel Dashboard
-   - [ ] בדוק שה-build עובד
+2. **Neon Dev Branch** (optional — לסביבת פיתוח)
+   - [ ] צור branch `dev` ב-Neon console
+   - [ ] עדכן `.env` עם connection strings של `dev`
 
 ---
 
