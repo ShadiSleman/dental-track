@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { getMessages, sendMessage } from '../api/messages'
 import { useAuthStore } from '../store/authStore'
-import { getSocket } from '../hooks/useSocket'
 import type { Message } from '../types'
 
 interface Props {
@@ -16,20 +15,11 @@ export default function ChatPanel({ workOrderId }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    getMessages(workOrderId).then(setMessages)
-
-    const socket = getSocket()
-    if (socket) {
-      socket.emit('join_order', workOrderId)
-      socket.on('new_message', (msg: Message) => {
-        if (msg.workOrderId === workOrderId) {
-          setMessages((prev) => [...prev, msg])
-        }
-      })
-    }
-    return () => {
-      getSocket()?.off('new_message')
-    }
+    // Initial load + poll every 5 s
+    const load = () => getMessages(workOrderId).then(setMessages).catch(() => {})
+    load()
+    const timer = setInterval(load, 5_000)
+    return () => clearInterval(timer)
   }, [workOrderId])
 
   useEffect(() => {
