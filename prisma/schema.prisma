@@ -86,7 +86,12 @@ model WorkOrder {
   id                     String    @id @default(cuid())
   orderNumber            String    @unique
   patientCode            String
-  workType               String
+  firstName              String?
+  lastName               String?
+  gender                 String?
+  birthDate              DateTime?
+  scanDate               DateTime?
+  workType               String    @default("other")
   currentStage           String    @default("scan_received")
   dueDate                DateTime?
   notes                  String?

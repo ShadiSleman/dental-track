@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | **LOCAL** | `local` | http://localhost:5174 | http://localhost:5051 | branch `main` (dev) |
 | **DEV** | `dev` | https://dental-track-dev.vercel.app | Vercel Serverless | branch `dev` |
-| **PROD** | `prod` | https://dental-track.vercel.app | Vercel Serverless | branch `prod` |
+| **PROD** | `prod` | https://dental-track-eight.vercel.app | Vercel Serverless | branch `main` |
 
 ---
 
@@ -130,7 +130,7 @@ Browser (React/Vite)
     ▼
 Vercel CDN (dist/)
     │
-    │  /api/* rewrite
+    │  /api/* routes (vercel.json)
     ▼
 Vercel Serverless Function (api/index.js)
     │
@@ -145,11 +145,21 @@ Vercel Serverless Function (api/index.js)
 
 ---
 
-## Neon Project Setup
+## Neon Project Setup ✅ (הושלם)
 
-1. נכנס ל-[console.neon.tech](https://console.neon.tech)
-2. צור Project: `dental-track`
-3. Branches:
-   - `main` (default) → LOCAL / DEV
-   - `prod` → PRODUCTION
-4. Copy connection string (עם pgBouncer לסביבת serverless)
+- Project ID: `bitter-sea-76544202`
+- Default branch: `production` (branch ID: `br-little-mud-b1kzb2m4`)
+- Endpoint ID: `ep-odd-snow-b1295ibo`
+- Region: EU Central 1 (Frankfurt)
+
+### פורמט Connection Strings
+```
+# DATABASE_URL (pooled — pgBouncer)
+postgresql://neondb_owner:PASSWORD@ep-odd-snow-b1295ibo-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true
+
+# DIRECT_URL (direct — prisma migrations / db push)
+# שים לב: כולל .c-5. בשם המארח (ללא -pooler)
+postgresql://neondb_owner:PASSWORD@ep-odd-snow-b1295ibo.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require
+```
+
+> ⚠️ שים לב: DIRECT_URL חייב לכלול `.c-5.` (region-code) — ללא זה `prisma db push` ייכשל עם P1000!

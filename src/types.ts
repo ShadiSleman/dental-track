@@ -100,8 +100,13 @@ export interface WorkOrder {
   lab: Lab
   assignedTechnician?: User
   patientCode: string
+  firstName?: string
+  lastName?: string
+  gender?: string
+  birthDate?: string
+  scanDate?: string
   workType: WorkType
-  dueDate: string
+  dueDate?: string
   currentStage: Stage
   stageHistory: StageHistoryEntry[]
   files: WorkOrderFile[]

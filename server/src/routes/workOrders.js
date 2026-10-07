@@ -149,11 +149,17 @@ router.get('/:id', async (req, res) => {
 // ─── POST /api/work-orders ────────────────────────────────────────────────────
 router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_created'), async (req, res) => {
   try {
-    const { patientCode, workType, dueDate, notes } = req.body
+    const { firstName, lastName, gender, birthDate, scanDate, notes } = req.body
     const doctor = req.user
 
     if (!doctor.clinicId || !doctor.labId)
       return res.status(400).json({ error: 'Doctor must be associated with a clinic and lab' })
+
+    if (!firstName || !lastName)
+      return res.status(400).json({ error: 'יש למלא שם פרטי ושם משפחה' })
+
+    if (!scanDate)
+      return res.status(400).json({ error: 'יש למלא תאריך סריקת עבודה' })
 
     // Upload files to R2
     const files = []
@@ -173,9 +179,13 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
     const order = await prisma.workOrder.create({
       data: {
         orderNumber: await nextOrderNumber(),
-        patientCode,
-        workType,
-        dueDate:  dueDate ? new Date(dueDate) : null,
+        patientCode: `${firstName} ${lastName}`,
+        firstName,
+        lastName,
+        gender:    gender   || null,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        scanDate:  scanDate  ? new Date(scanDate)  : null,
+        workType: 'other',
         notes,
         doctorId: doctor.id,
         clinicId: doctor.clinicId,

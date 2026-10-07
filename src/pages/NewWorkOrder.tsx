@@ -1,40 +1,64 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/workOrders'
-import type { WorkType } from '../types'
-import { WORK_TYPE_LABELS } from '../types'
 
-const WORK_TYPES = Object.entries(WORK_TYPE_LABELS) as [WorkType, string][]
+// Calculate age from birthDate string
+const calcAge = (birthDate: string): number | null => {
+  if (!birthDate) return null
+  const today = new Date()
+  const birth = new Date(birthDate)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age >= 0 ? age : null
+}
 
 export default function NewWorkOrder() {
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState({
-    patientCode: '',
-    workType: 'crown' as WorkType,
-    dueDate: '',
-    notes: '',
+    firstName: '',
+    lastName:  '',
+    gender:    '',
+    birthDate: '',
+    scanDate:  new Date().toISOString().split('T')[0], // default today
+    notes:     '',
   })
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles]   = useState<File[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]   = useState('')
+
+  const age = calcAge(form.birthDate)
+
+  const set = (key: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm(prev => ({ ...prev, [key]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!form.patientCode || !form.dueDate) {
-      setError('יש למלא שם/קוד מטופל ותאריך יעד')
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError('יש למלא שם פרטי ושם משפחה')
       return
     }
+    if (!form.scanDate) {
+      setError('יש למלא תאריך סריקת עבודה')
+      return
+    }
+
     setLoading(true)
     try {
       const fd = new FormData()
-      fd.append('patientCode', form.patientCode)
-      fd.append('workType', form.workType)
-      fd.append('dueDate', form.dueDate)
-      fd.append('notes', form.notes)
-      files.forEach((f) => fd.append('files', f))
+      fd.append('firstName', form.firstName.trim())
+      fd.append('lastName',  form.lastName.trim())
+      fd.append('gender',    form.gender)
+      fd.append('birthDate', form.birthDate)
+      fd.append('scanDate',  form.scanDate)
+      fd.append('notes',     form.notes)
+      files.forEach(f => fd.append('files', f))
+
       const order = await createOrder(fd)
       navigate(`/orders/${order._id}`)
     } catch (err: unknown) {
@@ -45,57 +69,78 @@ export default function NewWorkOrder() {
     }
   }
 
-  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setFiles(Array.from(e.target.files))
-  }
-
   return (
     <div className="max-w-lg mx-auto pb-20 md:pb-4">
       <h2 className="text-xl font-bold text-gray-900 mb-4">עבודה חדשה</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Patient */}
+
+        {/* Patient details */}
         <div className="card space-y-4">
           <h3 className="font-semibold text-gray-700">פרטי מטופל</h3>
-          <div>
-            <label className="label">שם / קוד מטופל *</label>
-            <input
-              className="input"
-              value={form.patientCode}
-              onChange={(e) => setForm({ ...form, patientCode: e.target.value })}
-              placeholder="לדוג': כהן דוד / P-1234"
-            />
+
+          {/* Name row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">שם פרטי *</label>
+              <input
+                className="input"
+                value={form.firstName}
+                onChange={set('firstName')}
+                placeholder="ישראל"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className="label">שם משפחה *</label>
+              <input
+                className="input"
+                value={form.lastName}
+                onChange={set('lastName')}
+                placeholder="ישראלי"
+                autoComplete="off"
+              />
+            </div>
           </div>
+
+          {/* Gender */}
           <div>
-            <label className="label">תאריך יעד לאספקה *</label>
+            <label className="label">מין</label>
+            <select className="input" value={form.gender} onChange={set('gender')}>
+              <option value="">-- בחר --</option>
+              <option value="זכר">זכר</option>
+              <option value="נקבה">נקבה</option>
+            </select>
+          </div>
+
+          {/* Birth date + age */}
+          <div>
+            <label className="label">תאריך לידה</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="date"
+                className="input flex-1"
+                value={form.birthDate}
+                onChange={set('birthDate')}
+                max={new Date().toISOString().split('T')[0]}
+              />
+              {age !== null && (
+                <span className="text-sm text-gray-500 whitespace-nowrap">
+                  גיל: <strong>{age}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Scan date */}
+          <div>
+            <label className="label">תאריך סריקת עבודה *</label>
             <input
               type="date"
               className="input"
-              value={form.dueDate}
-              onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-              min={new Date().toISOString().split('T')[0]}
+              value={form.scanDate}
+              onChange={set('scanDate')}
             />
-          </div>
-        </div>
-
-        {/* Work type */}
-        <div className="card space-y-3">
-          <h3 className="font-semibold text-gray-700">סוג העבודה</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {WORK_TYPES.map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setForm({ ...form, workType: key })}
-                className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  form.workType === key
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-primary-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -106,7 +151,7 @@ export default function NewWorkOrder() {
             className="input"
             rows={3}
             value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            onChange={set('notes')}
             placeholder="הנחיות, צבע, מידות מיוחדות..."
           />
         </div>
@@ -120,7 +165,7 @@ export default function NewWorkOrder() {
             type="file"
             multiple
             accept=".stl,.ply,.obj,.pdf,image/*"
-            onChange={handleFiles}
+            onChange={e => { if (e.target.files) setFiles(Array.from(e.target.files)) }}
             className="hidden"
           />
           <button
