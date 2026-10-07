@@ -63,4 +63,4 @@ const deleteFromR2 = async (url) => {
   }))
 }
 
-module.exports = { uploadToR2, deleteFromR2 }
+module.exports = { uploadToR2, deleteFromR2, R2_CONFIGURED }

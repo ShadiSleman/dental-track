@@ -13,6 +13,7 @@ export const getOrder = (id: string) =>
 export const createOrder = (data: FormData) =>
   api.post<WorkOrder>('/work-orders', data, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
   }).then((r) => r.data)
 
 export const updateStage = (id: string, stage: Stage, note?: string) =>

@@ -5,7 +5,10 @@ const resolveBase = (): string => {
   return '/api'
 }
 
-const api = axios.create({ baseURL: resolveBase() })
+const api = axios.create({
+  baseURL: resolveBase(),
+  timeout: 25000, // 25 seconds — prevents mobile freeze
+})
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('dt_token')

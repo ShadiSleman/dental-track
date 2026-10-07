@@ -32,7 +32,12 @@ app.use('/api/admin',         require('./routes/admin'))
 app.use('/api/team',          require('./routes/team'))
 
 app.get('/api/health', (req, res) =>
-  res.json({ status: 'ok', uptime: process.uptime(), env: process.env.APP_ENV || 'local' })
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    env: process.env.APP_ENV || 'local',
+    r2: require('./lib/r2').R2_CONFIGURED,
+  })
 )
 
 // ─── Error handler ─────────────────────────────────────────────────────────────

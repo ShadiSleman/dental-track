@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/workOrders'
+import api from '../api/client'
 
 // Calculate age from birthDate string
 const calcAge = (birthDate: string): number | null => {
@@ -28,6 +29,11 @@ export default function NewWorkOrder() {
   const [files, setFiles]   = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
+  const [r2Ready, setR2Ready] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    api.get<{ r2: boolean }>('/health').then(r => setR2Ready(r.data.r2)).catch(() => setR2Ready(false))
+  }, [])
 
   const age = calcAge(form.birthDate)
 
@@ -62,8 +68,12 @@ export default function NewWorkOrder() {
       const order = await createOrder(fd)
       navigate(`/orders/${order._id}`)
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } }
-      setError(e?.response?.data?.error || 'שגיאה בשמירת העבודה. נסה שוב.')
+      const e = err as { response?: { data?: { error?: string } }; code?: string; message?: string }
+      if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
+        setError('הבקשה לקחה יותר מדי זמן — נסה שוב (רשת איטית?)')
+      } else {
+        setError(e?.response?.data?.error || 'שגיאה בשמירת העבודה. נסה שוב.')
+      }
     } finally {
       setLoading(false)
     }
@@ -104,11 +114,26 @@ export default function NewWorkOrder() {
           {/* Gender */}
           <div>
             <label className="label">מין</label>
-            <select className="input" value={form.gender} onChange={set('gender')}>
-              <option value="">-- בחר --</option>
-              <option value="זכר">זכר</option>
-              <option value="נקבה">נקבה</option>
-            </select>
+            <div className="flex gap-4 mt-1">
+              {['זכר', 'נקבה'].map(g => (
+                <label key={g} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                  form.gender === g
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 font-semibold'
+                    : 'border-gray-200 text-gray-600 hover:border-primary-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="gender"
+                    value={g}
+                    checked={form.gender === g}
+                    onChange={() => setForm(prev => ({ ...prev, gender: g }))}
+                    className="hidden"
+                  />
+                  <span>{g === 'זכר' ? '👨' : '👩'}</span>
+                  <span>{g}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Birth date + age */}
@@ -157,6 +182,11 @@ export default function NewWorkOrder() {
         {/* Files */}
         <div className="card space-y-3">
           <h3 className="font-semibold text-gray-700">קבצים</h3>
+          {r2Ready === false && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700">
+              ⚠️ שירות אחסון הקבצים (R2) טרם הוגדר — הקבצים לא יישמרו עד להגדרתו.
+            </div>
+          )}
           <p className="text-xs text-gray-400">STL, PLY, OBJ, PDF, תמונות</p>
           <input
             ref={fileRef}
@@ -169,7 +199,8 @@ export default function NewWorkOrder() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="btn-secondary w-full text-sm"
+            disabled={r2Ready === false}
+            className={`btn-secondary w-full text-sm ${r2Ready === false ? 'opacity-40 cursor-not-allowed' : ''}`}
           >
             📎 בחר קבצים
           </button>
