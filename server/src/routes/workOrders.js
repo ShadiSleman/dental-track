@@ -161,11 +161,11 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
     if (!scanDate)
       return res.status(400).json({ error: 'יש למלא תאריך סריקת עבודה' })
 
-    // Upload files to R2
+    // Upload files to R2 (skipped gracefully if R2 not configured)
     const files = []
     for (const f of (req.files || [])) {
       const url = await uploadToR2(f.buffer, f.mimetype, f.originalname, 'orders')
-      files.push({ url, type: f.mimetype, name: f.originalname, uploadedAt: new Date().toISOString() })
+      if (url) files.push({ url, type: f.mimetype, name: f.originalname, uploadedAt: new Date().toISOString() })
     }
 
     const stageHistory = [{

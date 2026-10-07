@@ -45,9 +45,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Top bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/tooth.svg" className="w-7 h-7" alt="logo" />
-            <span className="font-bold text-primary-700 text-lg tracking-tight">DentalTrack</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" className="h-9 w-9 rounded-full object-cover" alt="GAZI DENT" />
+            <div className="leading-tight">
+              <div className="font-bold text-primary-700 text-base tracking-tight">GAZI DENT</div>
+              <div className="text-gray-400 text-xs hidden sm:block">מרפאה ומעבדת שיניים דיגיטלית</div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />
