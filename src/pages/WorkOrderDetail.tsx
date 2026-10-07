@@ -63,7 +63,9 @@ export default function WorkOrderDetail() {
 
   const stageIdx = STAGES.findIndex((s) => s.key === order.currentStage)
   const progress = Math.round(((stageIdx + 1) / STAGES.length) * 100)
-  const daysLeft = Math.ceil((new Date(order.dueDate).getTime() - Date.now()) / 86400000)
+  const daysLeft = order.dueDate
+    ? Math.ceil((new Date(order.dueDate).getTime() - Date.now()) / 86400000)
+    : null
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-20 md:pb-4">
@@ -108,6 +110,7 @@ export default function WorkOrderDetail() {
             <p className="text-gray-400 text-xs">מעבדה</p>
             <p className="font-medium">{order.lab?.name}</p>
           </div>
+          {order.dueDate && daysLeft !== null && (
           <div>
             <p className="text-gray-400 text-xs">תאריך יעד</p>
             <p className={`font-medium ${daysLeft < 0 ? 'text-red-500' : daysLeft <= 2 ? 'text-orange-500' : ''}`}>
@@ -115,6 +118,7 @@ export default function WorkOrderDetail() {
               {daysLeft >= 0 ? ` (${daysLeft} ימים)` : ` (פגר ${Math.abs(daysLeft)} ימים)`}
             </p>
           </div>
+          )}
           {order.assignedTechnician && (
             <div>
               <p className="text-gray-400 text-xs">טכנאי</p>
