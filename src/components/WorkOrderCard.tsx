@@ -13,9 +13,9 @@ export default function WorkOrderCard({ order }: Props) {
   const stageIdx = STAGES.findIndex((s) => s.key === order.currentStage)
   const progress = Math.round(((stageIdx + 1) / STAGES.length) * 100)
 
-  const daysLeft = Math.ceil(
-    (new Date(order.dueDate).getTime() - Date.now()) / 86400000,
-  )
+  const daysLeft = order.dueDate
+    ? Math.ceil((new Date(order.dueDate).getTime() - Date.now()) / 86400000)
+    : null
 
   return (
     <motion.div
@@ -60,13 +60,15 @@ export default function WorkOrderCard({ order }: Props) {
 
       <div className="flex justify-between text-xs text-gray-400">
         <span>{order.lab?.name}</span>
-        <span className={daysLeft < 0 ? 'text-red-500 font-medium' : daysLeft <= 2 ? 'text-orange-500' : ''}>
-          {daysLeft < 0
-            ? `פג תוקף לפני ${Math.abs(daysLeft)} ימים`
-            : daysLeft === 0
-            ? 'אספקה היום'
-            : `${daysLeft} ימים לאספקה`}
-        </span>
+        {daysLeft !== null && (
+          <span className={daysLeft < 0 ? 'text-red-500 font-medium' : daysLeft <= 2 ? 'text-orange-500' : ''}>
+            {daysLeft < 0
+              ? `פג תוקף לפני ${Math.abs(daysLeft)} ימים`
+              : daysLeft === 0
+              ? 'אספקה היום'
+              : `${daysLeft} ימים לאספקה`}
+          </span>
+        )}
       </div>
     </motion.div>
   )
