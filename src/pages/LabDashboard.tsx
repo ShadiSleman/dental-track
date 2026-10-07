@@ -27,15 +27,21 @@ const matchSearch = (o: WorkOrder, q: string) => {
   )
 }
 
+const PAGE_SIZE = 20
+
 export default function LabDashboard() {
   const { orders, setOrders, loading, setLoading } = useOrdersStore()
   const [filter, setFilter] = useState<FilterKey>('all')
   const [search, setSearch] = useState('')
+  const [page, setPage]     = useState(1)
 
   useEffect(() => {
     setLoading(true)
     getAllOrders().then(setOrders).finally(() => setLoading(false))
   }, [setOrders, setLoading])
+
+  // Reset page on filter/search change
+  useEffect(() => { setPage(1) }, [filter, search])
 
   const filtered = orders.filter((o: WorkOrder) => {
     const matchFilter =
@@ -54,24 +60,18 @@ export default function LabDashboard() {
   const pendingApproval = orders.filter((o: WorkOrder) => o.requiresDoctorApproval).length
   const shipping        = orders.filter((o: WorkOrder) => o.currentStage === 'with_courier').length
 
-  const KpiCard = ({ count, label, filterKey, colorClass }: {
-    count: number; label: string; filterKey: FilterKey; colorClass?: string
+  const KpiCard = ({ count, label, filterKey, icon, colorClass, numColor }: {
+    count: number; label: string; filterKey: FilterKey; icon: string; colorClass?: string; numColor: string
   }) => (
     <motion.button
       whileTap={{ scale: 0.95 }}
       onClick={() => setFilter(f => f === filterKey ? 'all' : filterKey)}
       className={`card text-center w-full transition-all ${
-        filter === filterKey ? 'ring-2 ring-primary-500 bg-primary-50' : (colorClass || '')
+        filter === filterKey ? 'ring-2 ring-primary-400 bg-primary-50' : (colorClass || '')
       }`}
     >
-      <p className={`text-2xl font-bold ${
-        filter === filterKey ? 'text-primary-700' :
-        colorClass?.includes('red') ? 'text-red-500' :
-        colorClass?.includes('yellow') ? 'text-yellow-600' :
-        colorClass?.includes('emerald') ? 'text-emerald-500' :
-        colorClass?.includes('teal') ? 'text-teal-600' :
-        'text-primary-600'
-      }`}>{count}</p>
+      <div className="text-xl mb-1">{icon}</div>
+      <p className={`text-2xl font-bold ${filter === filterKey ? 'text-primary-700' : numColor}`}>{count}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
     </motion.button>
   )
@@ -85,10 +85,10 @@ export default function LabDashboard() {
 
       {/* KPI cards — clickable */}
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard count={open}            label="פתוחות"          filterKey="open" />
-        <KpiCard count={pendingApproval} label="ממתין לאישור"    filterKey="pending_approval" colorClass="bg-yellow-50 border-yellow-200" />
-        <KpiCard count={delayed}         label="מאחרות"           filterKey="delayed"  colorClass="bg-red-50 border-red-200" />
-        <KpiCard count={shipping}        label="אצל שליח 🚚"     filterKey="shipping" colorClass="bg-teal-50 border-teal-200" />
+        <KpiCard count={open}            label="פתוחות"       filterKey="open"             icon="📋" colorClass=""                              numColor="text-primary-600" />
+        <KpiCard count={pendingApproval} label="ממתין לאישור" filterKey="pending_approval" icon="⏳" colorClass="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
+        <KpiCard count={delayed}         label="מאחרות"        filterKey="delayed"          icon="🚨" colorClass="bg-red-50 border-red-200"       numColor="text-red-500" />
+        <KpiCard count={shipping}        label="אצל שליח"     filterKey="shipping"         icon="🚚" colorClass="bg-teal-50 border-teal-200"     numColor="text-teal-600" />
       </div>
 
       {/* Search */}
@@ -122,7 +122,17 @@ export default function LabDashboard() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="card animate-pulse h-24 bg-gray-100" />
+            <div key={i} className="card animate-pulse">
+              <div className="flex justify-between mb-3">
+                <div className="space-y-2">
+                  <div className="h-3 w-20 bg-gray-200 rounded" />
+                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                  <div className="h-3 w-16 bg-gray-200 rounded" />
+                </div>
+                <div className="h-6 w-20 bg-gray-200 rounded-full" />
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded-full" />
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -131,11 +141,21 @@ export default function LabDashboard() {
           <p>{search ? 'לא נמצאו תוצאות לחיפוש' : 'אין עבודות'}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((o: WorkOrder) => (
-            <WorkOrderCard key={o._id} order={o} />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3">
+            {filtered.slice(0, page * PAGE_SIZE).map((o: WorkOrder) => (
+              <WorkOrderCard key={o._id} order={o} />
+            ))}
+          </div>
+          {filtered.length > page * PAGE_SIZE && (
+            <button
+              onClick={() => setPage(p => p + 1)}
+              className="w-full py-3 text-sm text-primary-600 font-medium bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors"
+            >
+              טען עוד ({filtered.length - page * PAGE_SIZE} נותרו)
+            </button>
+          )}
+        </>
       )}
     </div>
   )

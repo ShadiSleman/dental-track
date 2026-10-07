@@ -55,22 +55,18 @@ export default function DoctorDashboard() {
     !o.requiresDoctorApproval && o.currentStage !== 'delivered' && o.currentStage !== 'with_courier'
   ).length
 
-  const KpiCard = ({ count, label, tabKey, color }: {
-    count: number; label: string; tabKey: TabKey; color: string
+  const KpiCard = ({ count, label, tabKey, icon, color, numColor }: {
+    count: number; label: string; tabKey: TabKey; icon: string; color: string; numColor: string
   }) => (
     <motion.button
       whileTap={{ scale: 0.95 }}
       onClick={() => setTab(t => t === tabKey ? 'all' : tabKey)}
       className={`card text-center w-full transition-all ${
-        tab === tabKey ? 'ring-2 ring-primary-500 bg-primary-50' : ''
-      } ${count > 0 ? color : ''}`}
+        tab === tabKey ? 'ring-2 ring-primary-400 bg-primary-50' : (count > 0 ? color : '')
+      }`}
     >
-      <p className={`text-2xl font-bold ${
-        tab === tabKey ? 'text-primary-700' :
-        color.includes('yellow') ? 'text-yellow-600' :
-        color.includes('red') ? 'text-red-500' :
-        'text-primary-600'
-      }`}>{count}</p>
+      <div className="text-xl mb-1">{icon}</div>
+      <p className={`text-2xl font-bold ${tab === tabKey ? 'text-primary-700' : numColor}`}>{count}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
     </motion.button>
   )
@@ -83,12 +79,33 @@ export default function DoctorDashboard() {
       </div>
 
       {/* KPI cards — clickable */}
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard count={activeCount}   label="עבודות פעילות"  tabKey="active"   color="" />
-        <KpiCard count={approvalCount} label="ממתין לאישור"   tabKey="pending"  color="bg-yellow-50 border-yellow-200" />
-        <KpiCard count={delayedCount}  label="מאחרים"          tabKey="delayed"  color="bg-red-50 border-red-200" />
-        <KpiCard count={shippingCount} label="בדרך אליך 🚚"   tabKey="shipping" color="bg-teal-50 border-teal-200" />
+      <div className="grid grid-cols-3 gap-3">
+        <KpiCard count={activeCount}   label="פעילות"       tabKey="active"   icon="🦷" color=""                              numColor="text-primary-600" />
+        <KpiCard count={approvalCount} label="ממתין לאישור" tabKey="pending"  icon="⏳" color="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
+        <KpiCard count={delayedCount}  label="מאחרים"        tabKey="delayed"  icon="🚨" color="bg-red-50 border-red-200"       numColor="text-red-500" />
       </div>
+
+      {/* בדרך אליך — banner (original position) but clickable */}
+      {shippingCount > 0 && (
+        <motion.button
+          initial={{ opacity: 0, x: 8 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setTab(t => t === 'shipping' ? 'all' : 'shipping')}
+          className={`w-full text-right rounded-xl px-4 py-3 flex items-center gap-3 border transition-all ${
+            tab === 'shipping'
+              ? 'bg-teal-100 border-teal-400 ring-2 ring-teal-400'
+              : 'bg-teal-50 border-teal-200'
+          }`}
+        >
+          <span className="text-2xl">🚚</span>
+          <div className="flex-1">
+            <p className="font-medium text-teal-800">{shippingCount} עבודות בדרך אליך</p>
+            <p className="text-xs text-teal-600">לחץ לסינון עבודות עם שליח</p>
+          </div>
+          <span className="text-teal-400 text-lg">←</span>
+        </motion.button>
+      )}
 
       {/* Search */}
       <div className="relative">

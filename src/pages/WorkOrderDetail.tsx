@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/authStore'
 import ProgressTimeline from '../components/ProgressTimeline'
 import ChatPanel from '../components/ChatPanel'
 import type { WorkOrder } from '../types'
-import { WORK_TYPE_LABELS, STAGES } from '../types'
+import { STAGES } from '../types'
 
 export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>()
@@ -80,7 +80,9 @@ export default function WorkOrderDetail() {
           <div>
             <span className="text-xs text-gray-400">עבודה #{order.orderNumber}</span>
             <h2 className="text-xl font-bold text-gray-900">{order.patientCode}</h2>
-            <p className="text-gray-500">{WORK_TYPE_LABELS[order.workType]}</p>
+            <p className="text-sm text-gray-500">
+              {[order.gender, order.birthDate ? `ת.לידה ${new Date(order.birthDate).toLocaleDateString('he-IL')}` : null, order.scanDate ? `סריקה ${new Date(order.scanDate).toLocaleDateString('he-IL')}` : null].filter(Boolean).join(' · ')}
+            </p>
           </div>
           <div className="text-left">
             {order.isDelayed && <span className="badge bg-red-100 text-red-700 mb-1 block">מאחר</span>}
@@ -188,8 +190,9 @@ export default function WorkOrderDetail() {
 
       {activeTab === 'files' && (
         <div className="card space-y-3">
+          <h3 className="font-semibold text-gray-700">קבצים ({order.files.length})</h3>
           {order.files.length === 0 ? (
-            <p className="text-gray-400 text-sm">אין קבצים מצורפים</p>
+            <p className="text-gray-400 text-sm text-center py-6">אין קבצים מצורפים לעבודה זו</p>
           ) : (
             <div className="space-y-2">
               {order.files.map((f, i) => (
@@ -198,17 +201,20 @@ export default function WorkOrderDetail() {
                   href={f.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors border border-transparent hover:border-primary-200"
                 >
-                  <span className="text-2xl">
-                    {f.type.includes('image') ? '🖼️' : f.type.includes('pdf') ? '📄' : '📦'}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{f.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(f.uploadedAt).toLocaleDateString('he-IL')}
-                    </p>
+                  {f.type.includes('image') ? (
+                    <img src={f.url} alt={f.name} className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
+                  ) : (
+                    <div className="w-14 h-14 bg-white border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 text-2xl">
+                      {f.type.includes('pdf') ? '📄' : '📦'}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{f.name}</p>
+                    <p className="text-xs text-gray-400">{f.type} · {new Date(f.uploadedAt).toLocaleDateString('he-IL')}</p>
                   </div>
+                  <span className="text-gray-400 text-sm flex-shrink-0">⬇️</span>
                 </a>
               ))}
             </div>

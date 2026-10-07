@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { WorkOrder } from '../types'
-import { STAGES, WORK_TYPE_LABELS } from '../types'
+import { STAGES } from '../types'
 
 interface Props {
   order: WorkOrder
@@ -35,7 +35,9 @@ export default function WorkOrderCard({ order }: Props) {
         <div>
           <span className="text-xs text-gray-400">#{order.orderNumber}</span>
           <h3 className="font-semibold text-gray-900">{order.patientCode}</h3>
-          <p className="text-sm text-gray-500">{WORK_TYPE_LABELS[order.workType]}</p>
+          {order.gender && (
+            <p className="text-xs text-gray-400">{order.gender}{order.birthDate ? ` · ${new Date(order.birthDate).toLocaleDateString('he-IL')}` : ''}</p>
+          )}
         </div>
         <div className="text-left">
           {order.isDelayed && (

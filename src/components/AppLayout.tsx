@@ -46,11 +46,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" className="h-9 w-9 rounded-full object-cover" alt="GAZI DENT" />
-            <div className="leading-tight">
-              <div className="font-bold text-primary-700 text-base tracking-tight">GAZI DENT</div>
-              <div className="text-gray-400 text-xs hidden sm:block">מרפאה ומעבדת שיניים דיגיטלית</div>
-            </div>
+            <img src="/logo.png" className="h-10 w-10 object-contain" alt="GAZI DENT" />
+            <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide">GAZI DENT</span>
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />

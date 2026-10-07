@@ -87,7 +87,6 @@ export default function NewWorkOrder() {
                 className="input"
                 value={form.firstName}
                 onChange={set('firstName')}
-                placeholder="ישראל"
                 autoComplete="off"
               />
             </div>
@@ -97,7 +96,6 @@ export default function NewWorkOrder() {
                 className="input"
                 value={form.lastName}
                 onChange={set('lastName')}
-                placeholder="ישראלי"
                 autoComplete="off"
               />
             </div>
