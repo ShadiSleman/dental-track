@@ -37,8 +37,9 @@ export default function NewWorkOrder() {
       files.forEach((f) => fd.append('files', f))
       const order = await createOrder(fd)
       navigate(`/orders/${order._id}`)
-    } catch {
-      setError('שגיאה בשמירת העבודה. נסה שוב.')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } }
+      setError(e?.response?.data?.error || 'שגיאה בשמירת העבודה. נסה שוב.')
     } finally {
       setLoading(false)
     }

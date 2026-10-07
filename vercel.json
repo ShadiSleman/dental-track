@@ -1,9 +1,13 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/(.*)",     "destination": "/index.html" }
-  ],
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install && cd server && npm install && cd .."
+  "installCommand": "npm install && cd server && npm install && cd ..",
+  "functions": {
+    "api/index.js": { "maxDuration": 30 }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
