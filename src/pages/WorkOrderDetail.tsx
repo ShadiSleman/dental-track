@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getOrder, approveOrder, rejectOrder, updateStage, uploadStageImages } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import ProgressTimeline from '../components/ProgressTimeline'
 import ChatPanel from '../components/ChatPanel'
-import type { WorkOrder } from '../types'
+import type { WorkOrder, Stage } from '../types'
 import { STAGES } from '../types'
 
 export default function WorkOrderDetail() {
@@ -20,6 +20,9 @@ export default function WorkOrderDetail() {
   const [rejectReason, setRejectReason] = useState('')
   const [showReject, setShowReject] = useState(false)
   const [activeTab, setActiveTab] = useState<'timeline' | 'files' | 'chat'>('timeline')
+  const [stageNote, setStageNote] = useState('')
+  const [advancing, setAdvancing] = useState(false)
+  const [showStagePanel, setShowStagePanel] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -59,6 +62,28 @@ export default function WorkOrderDetail() {
     upsertOrder(updated)
     setShowReject(false)
     setRejectReason('')
+  }
+
+  // Stage advancement — for lab_manager / technician
+  const nextStageKey = (): Stage | null => {
+    if (!order) return null
+    const idx = STAGES.findIndex(s => s.key === order.currentStage)
+    if (idx === -1 || idx >= STAGES.length - 1) return null
+    return STAGES[idx + 1].key
+  }
+
+  const handleAdvanceStage = async (targetStage: Stage) => {
+    if (!order) return
+    setAdvancing(true)
+    try {
+      const updated = await updateStage(order._id, targetStage, stageNote)
+      setOrder(updated)
+      upsertOrder(updated)
+      setStageNote('')
+      setShowStagePanel(false)
+    } finally {
+      setAdvancing(false)
+    }
   }
 
   const stageIdx = STAGES.findIndex((s) => s.key === order.currentStage)
@@ -162,6 +187,110 @@ export default function WorkOrderDetail() {
               </div>
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* Lab / Technician — stage advancement */}
+      {(user?.role === 'lab_manager' || user?.role === 'technician') && order.currentStage !== 'delivered' && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card border border-primary-100 space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-800">🔧 קידום עבודה</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                שלב נוכחי: <span className="font-medium text-primary-700">{STAGES.find(s => s.key === order.currentStage)?.label}</span>
+              </p>
+            </div>
+            <button
+              onClick={() => setShowStagePanel(v => !v)}
+              className="text-xs text-primary-600 font-medium px-3 py-1.5 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+            >
+              {showStagePanel ? 'סגור' : 'קדם שלב ▸'}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showStagePanel && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-3 overflow-hidden"
+              >
+                {/* Quick actions */}
+                <div className="grid grid-cols-1 gap-2">
+                  {nextStageKey() && (
+                    <button
+                      onClick={() => handleAdvanceStage(nextStageKey()!)}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      {advancing ? 'מעדכן...' : `▶ קדם ל: ${STAGES.find(s => s.key === nextStageKey())?.label}`}
+                    </button>
+                  )}
+                  {/* Send to doctor for approval */}
+                  {order.currentStage !== 'awaiting_approval' && order.currentStage !== 'scan_received' && (
+                    <button
+                      onClick={() => handleAdvanceStage('awaiting_approval')}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      📤 שלח לאישור רופא
+                    </button>
+                  )}
+                  {/* Open order (first step) */}
+                  {order.currentStage === 'scan_received' && (
+                    <button
+                      onClick={() => handleAdvanceStage('order_opened')}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      📂 פתח עבודה
+                    </button>
+                  )}
+                  {/* Ready to ship */}
+                  {!['scan_received','ready_to_ship','with_courier','delivered'].includes(order.currentStage) && (
+                    <button
+                      onClick={() => handleAdvanceStage('ready_to_ship')}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      📦 מוכן למשלוח
+                    </button>
+                  )}
+                </div>
+
+                {/* Note */}
+                <textarea
+                  className="input text-sm"
+                  rows={2}
+                  placeholder="הערה (אופציונלי)"
+                  value={stageNote}
+                  onChange={e => setStageNote(e.target.value)}
+                />
+
+                {/* All stages picker */}
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-gray-500 hover:text-gray-700">כל השלבים</summary>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {STAGES.filter(s => s.key !== order.currentStage && s.key !== 'delivered').map(s => (
+                      <button
+                        key={s.key}
+                        onClick={() => handleAdvanceStage(s.key)}
+                        disabled={advancing}
+                        className="py-1.5 px-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors disabled:opacity-50 text-right"
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 

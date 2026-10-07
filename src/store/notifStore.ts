@@ -6,6 +6,7 @@ interface NotifStore {
   unreadCount: number
   addNotification: (n: AppNotification) => void
   markAllRead: () => void
+  markOneRead: (id: string) => void
   setNotifications: (ns: AppNotification[]) => void
 }
 
@@ -23,6 +24,15 @@ export const useNotifStore = create<NotifStore>((set, get) => ({
       notifications: get().notifications.map((n) => ({ ...n, read: true })),
       unreadCount: 0,
     }),
+  markOneRead: (id) => {
+    const notifications = get().notifications.map(n =>
+      n._id === id ? { ...n, read: true } : n
+    )
+    set({
+      notifications,
+      unreadCount: notifications.filter(n => !n.read).length,
+    })
+  },
   setNotifications: (notifications) =>
     set({
       notifications,

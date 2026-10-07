@@ -76,7 +76,6 @@ router.get('/stats', roleGuard('lab_manager', 'super_admin'), async (req, res) =
       by:    ['assignedTechnicianId'],
       where: { ...labFilter, assignedTechnicianId: { not: null } },
       _count: { id: true },
-      _sum:   { isDelayed: true },
       orderBy: { _count: { id: 'desc' } },
       take:  5,
     })

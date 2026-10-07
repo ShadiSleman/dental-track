@@ -5,10 +5,11 @@ import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
 import type { WorkOrder } from '../types'
 
-type FilterKey = 'all' | 'open' | 'delayed' | 'pending_approval' | 'shipping' | 'done'
+type FilterKey = 'all' | 'new' | 'open' | 'delayed' | 'pending_approval' | 'shipping' | 'done'
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all',              label: 'הכל' },
+  { key: 'new',              label: 'חדשות 📥' },
   { key: 'open',             label: 'פתוחות' },
   { key: 'pending_approval', label: 'ממתין לאישור' },
   { key: 'delayed',          label: 'מאחרות' },
@@ -46,7 +47,8 @@ export default function LabDashboard() {
   const filtered = orders.filter((o: WorkOrder) => {
     const matchFilter =
       filter === 'all'              ? true :
-      filter === 'open'             ? o.currentStage !== 'delivered' :
+      filter === 'new'              ? o.currentStage === 'scan_received' :
+      filter === 'open'             ? (o.currentStage !== 'delivered' && o.currentStage !== 'scan_received') :
       filter === 'pending_approval' ? o.requiresDoctorApproval :
       filter === 'delayed'          ? o.isDelayed :
       filter === 'shipping'         ? o.currentStage === 'with_courier' :
@@ -54,7 +56,8 @@ export default function LabDashboard() {
     return matchFilter && matchSearch(o, search)
   })
 
-  const open            = orders.filter((o: WorkOrder) => o.currentStage !== 'delivered').length
+  const newOrders       = orders.filter((o: WorkOrder) => o.currentStage === 'scan_received').length
+  const open            = orders.filter((o: WorkOrder) => o.currentStage !== 'delivered' && o.currentStage !== 'scan_received').length
   const delayed         = orders.filter((o: WorkOrder) => o.isDelayed).length
   const done            = orders.filter((o: WorkOrder) => o.currentStage === 'delivered').length
   const pendingApproval = orders.filter((o: WorkOrder) => o.requiresDoctorApproval).length
@@ -85,10 +88,10 @@ export default function LabDashboard() {
 
       {/* KPI cards — clickable */}
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard count={open}            label="פתוחות"       filterKey="open"             icon="📋" colorClass=""                              numColor="text-primary-600" />
-        <KpiCard count={pendingApproval} label="ממתין לאישור" filterKey="pending_approval" icon="⏳" colorClass="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
-        <KpiCard count={delayed}         label="מאחרות"        filterKey="delayed"          icon="🚨" colorClass="bg-red-50 border-red-200"       numColor="text-red-500" />
-        <KpiCard count={shipping}        label="אצל שליח"     filterKey="shipping"         icon="🚚" colorClass="bg-teal-50 border-teal-200"     numColor="text-teal-600" />
+        <KpiCard count={newOrders}       label="חדשות 📥"      filterKey="new"              icon="🆕" colorClass="bg-indigo-50 border-indigo-200" numColor="text-indigo-600" />
+        <KpiCard count={open}            label="פתוחות"        filterKey="open"             icon="📋" colorClass=""                               numColor="text-primary-600" />
+        <KpiCard count={pendingApproval} label="ממתין לאישור"  filterKey="pending_approval" icon="⏳" colorClass="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
+        <KpiCard count={delayed}         label="מאחרות"         filterKey="delayed"          icon="🚨" colorClass="bg-red-50 border-red-200"       numColor="text-red-500" />
       </div>
 
       {/* Search */}

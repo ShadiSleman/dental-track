@@ -1,6 +1,9 @@
+import { useState, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import NotificationBell from './NotificationBell'
+import { useOnClickOutside } from '../hooks/useOnClickOutside'
 
 const NAV_ITEMS = {
   doctor: [
@@ -28,17 +31,96 @@ const NAV_ITEMS = {
   ],
 }
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuthStore()
-  const location = useLocation()
-  const navigate = useNavigate()
+const ROLE_LABELS: Record<string, string> = {
+  doctor:      'רופא',
+  lab_manager: 'מנהל מעבדה',
+  technician:  'טכנאי',
+  courier:     'שליח',
+  super_admin: 'סופר אדמין',
+}
 
-  const items = user ? (NAV_ITEMS[user.role] ?? []) : []
+function ProfileButton() {
+  const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useOnClickOutside(ref, () => setOpen(false))
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
+
+  if (!user) return null
+
+  // Initials avatar
+  const initials = user.name
+    ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-100 transition-colors"
+        aria-label="פרופיל"
+      >
+        {/* Avatar circle */}
+        <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+          {initials}
+        </div>
+        {/* Name — visible on all screen sizes */}
+        <div className="text-right leading-tight">
+          <p className="text-sm font-semibold text-gray-800 max-w-[100px] truncate">{user.name}</p>
+          <p className="text-[10px] text-gray-400">{ROLE_LABELS[user.role] ?? user.role}</p>
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            className="absolute left-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+          >
+            {/* User info section */}
+            <div className="px-4 py-4 bg-gradient-to-br from-primary-50 to-white border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center text-lg font-bold">
+                  {initials}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-500">{ROLE_LABELS[user.role] ?? user.role}</p>
+                  <p className="text-xs text-gray-400 truncate max-w-[160px]">{user.email}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="p-2">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+              >
+                <span className="text-lg">🚪</span>
+                התנתק
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore()
+  const location = useLocation()
+
+  const items = user ? (NAV_ITEMS[user.role] ?? []) : []
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -47,14 +129,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/logo.png" className="h-10 w-10 object-contain" alt="GAZI DENT" />
-            <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide">GAZI DENT</span>
+            <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide hidden sm:block">GAZI DENT</span>
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />
-            <div className="text-sm text-gray-600 hidden sm:block">{user?.name}</div>
-            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1">
-              יציאה
-            </button>
+            <ProfileButton />
           </div>
         </div>
       </header>
