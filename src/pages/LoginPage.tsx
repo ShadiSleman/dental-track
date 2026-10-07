@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -24,7 +25,12 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { token, user } = await login(email, password)
-      localStorage.setItem('dt_token', token)
+      // Set remember-me flag BEFORE setAuth so the custom storage uses it
+      if (rememberMe) {
+        localStorage.setItem('dt-remember', '1')
+      } else {
+        localStorage.removeItem('dt-remember')
+      }
       setAuth(token, user)
       if (user.role === 'super_admin') navigate('/admin')
       else navigate('/dashboard')
@@ -140,6 +146,21 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Remember me */}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <div
+                  onClick={() => setRememberMe(v => !v)}
+                  className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors flex-shrink-0 ${
+                    rememberMe ? 'border-[#1a3a6b] bg-[#1a3a6b]' : 'border-gray-300 bg-white'
+                  }`}
+                >
+                  {rememberMe && <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>}
+                </div>
+                <span className="text-sm text-gray-600">זכור אותי</span>
+              </label>
 
               {/* Error */}
               {error && (

@@ -49,7 +49,7 @@ export default function NotificationBell() {
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            className="absolute left-0 top-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+            className="absolute right-0 top-12 w-[min(320px,calc(100vw-1rem))] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
               <h4 className="font-semibold text-gray-800">התראות</h4>

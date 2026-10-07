@@ -63,18 +63,17 @@ function ProfileButton() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
         aria-label="פרופיל"
       >
-        {/* Avatar circle */}
-        <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-          {initials}
-        </div>
-        {/* Name — visible on all screen sizes */}
+        {/* Name + role — no avatar */}
         <div className="text-right leading-tight">
-          <p className="text-sm font-semibold text-gray-800 max-w-[100px] truncate">{user.name}</p>
+          <p className="text-sm font-semibold text-gray-800 max-w-[110px] truncate">{user.name}</p>
           <p className="text-[10px] text-gray-400">{ROLE_LABELS[user.role] ?? user.role}</p>
         </div>
+        <svg className="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
       </button>
 
       <AnimatePresence>
@@ -87,16 +86,9 @@ function ProfileButton() {
           >
             {/* User info section */}
             <div className="px-4 py-4 bg-gradient-to-br from-primary-50 to-white border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center text-lg font-bold">
-                  {initials}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{ROLE_LABELS[user.role] ?? user.role}</p>
-                  <p className="text-xs text-gray-400 truncate max-w-[160px]">{user.email}</p>
-                </div>
-              </div>
+              <p className="font-bold text-gray-900">{user.name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{ROLE_LABELS[user.role] ?? user.role}</p>
+              <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
             </div>
 
             {/* Actions */}

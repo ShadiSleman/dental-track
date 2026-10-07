@@ -375,32 +375,62 @@ export default function WorkOrderDetail() {
 
       {activeTab === 'files' && (
         <div className="card space-y-3">
-          <h3 className="font-semibold text-gray-700">קבצים ({order.files.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-700">קבצים ({order.files.length})</h3>
+            {order.files.length > 1 && (
+              <button
+                onClick={() => order.files.forEach(f => {
+                  const a = document.createElement('a')
+                  a.href = f.url; a.download = f.name; a.target = '_blank'
+                  a.click()
+                })}
+                className="text-xs text-primary-600 font-medium px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+              >
+                ⬇️ הורד הכל
+              </button>
+            )}
+          </div>
           {order.files.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-6">אין קבצים מצורפים לעבודה זו</p>
           ) : (
             <div className="space-y-2">
               {order.files.map((f, i) => (
-                <a
-                  key={i}
-                  href={f.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors border border-transparent hover:border-primary-200"
-                >
-                  {f.type.includes('image') ? (
-                    <img src={f.url} alt={f.name} className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
-                  ) : (
-                    <div className="w-14 h-14 bg-white border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 text-2xl">
-                      {f.type.includes('pdf') ? '📄' : '📦'}
-                    </div>
-                  )}
+                <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-transparent hover:border-primary-200 hover:bg-primary-50 transition-colors">
+                  {/* Thumbnail / icon */}
+                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                    {f.type.includes('image') ? (
+                      <img src={f.url} alt={f.name} className="w-14 h-14 object-cover rounded-lg" />
+                    ) : (
+                      <div className="w-14 h-14 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-2xl">
+                        {f.type.includes('pdf') ? '📄' : '📦'}
+                      </div>
+                    )}
+                  </a>
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 truncate">{f.name}</p>
-                    <p className="text-xs text-gray-400">{f.type} · {new Date(f.uploadedAt).toLocaleDateString('he-IL')}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {f.type.split('/')[1]?.toUpperCase() ?? f.type}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                      <span>📅</span>
+                      <span>{new Date(f.uploadedAt).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </p>
                   </div>
-                  <span className="text-gray-400 text-sm flex-shrink-0">⬇️</span>
-                </a>
+                  {/* Download button */}
+                  <a
+                    href={f.url}
+                    download={f.name}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors"
+                    title="הורד קובץ"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </a>
+                </div>
               ))}
             </div>
           )}
