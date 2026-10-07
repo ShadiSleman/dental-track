@@ -53,11 +53,11 @@ DATABASE_URL=postgresql://USER:PASS@HOST/dental_track?sslmode=require&pgbouncer=
 DIRECT_URL=postgresql://USER:PASS@HOST/dental_track?sslmode=require
 
 # Cloudflare R2 — נוצר ב-dash.cloudflare.com
-R2_ACCOUNT_ID=your_cloudflare_account_id
-R2_ACCESS_KEY_ID=your_r2_access_key
-R2_SECRET_ACCESS_KEY=your_r2_secret_key
+R2_ACCOUNT_ID=4f5da284966441ad72099de8f367a4ae
+R2_ACCESS_KEY_ID=309e2094ee04bca1cf8259a26f936dac
+R2_SECRET_ACCESS_KEY=364aa24a30f60a24d985c15dd8abda9dbf6765c930f8ef487f2074999a6eb937
 R2_BUCKET_NAME=dental-track
-R2_PUBLIC_URL=https://pub-XXXXXXXX.r2.dev
+R2_PUBLIC_URL=https://pub-1b21d9a118e549d88248f3133255af62.r2.dev
 
 PORT=5051
 FRONTEND_URL=http://localhost:5174
@@ -163,3 +163,14 @@ postgresql://neondb_owner:PASSWORD@ep-odd-snow-b1295ibo.c-5.eu-central-1.aws.neo
 ```
 
 > ⚠️ שים לב: DIRECT_URL חייב לכלול `.c-5.` (region-code) — ללא זה `prisma db push` ייכשל עם P1000!
+
+---
+
+## Cloudflare R2 Setup ✅ (הושלם אוקטובר 2026)
+
+- Account ID: `4f5da284966441ad72099de8f367a4ae`
+- Bucket: `dental-track` (Eastern Europe, Standard)
+- Public URL: `https://pub-1b21d9a118e549d88248f3133255af62.r2.dev` (Public Development URL מופעל)
+- S3 Endpoint: `https://4f5da284966441ad72099de8f367a4ae.r2.cloudflarestorage.com`
+- Token: "R2 Account Token" — permissions: Object Read & Write, All buckets
+- כל 5 env vars נוספו ל-Vercel Production (אוקטובר 2026)
