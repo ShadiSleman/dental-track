@@ -28,6 +28,21 @@ const nextOrderNumber = async () => {
 const notify = (userId, workOrderId, type, title, body) =>
   prisma.notification.create({ data: { userId, workOrderId, type, title, body } }).catch(() => {})
 
+// Hebrew labels for stages
+const STAGE_LABELS = {
+  scan_received:     'סריקה התקבלה',
+  order_opened:      'עבודה נפתחה',
+  cad_design:        'תכנון CAD',
+  awaiting_approval: 'ממתין לאישור רופא',
+  approved:          'אושר על ידי הרופא',
+  manufacturing:     'בייצור',
+  finishing:         'צביעה / גימור',
+  quality_check:     'בקרת איכות',
+  ready_to_ship:     'מוכן למשלוח',
+  with_courier:      'אצל שליח',
+  delivered:         'נמסר למרפאה',
+}
+
 router.use(authJwt)
 
 // ─── GET /api/work-orders/stats ───────────────────────────────────────────────
@@ -239,12 +254,16 @@ router.patch('/:id/stage', roleGuard('technician', 'lab_manager', 'super_admin')
     })
 
     // Notify doctor (polling delivers it in ≤4 s)
+    const stageLabel = STAGE_LABELS[stage] || stage
+    const patientName = existing.patientCode || existing.orderNumber
     notify(
       existing.doctorId,
       existing.id,
       stage === 'awaiting_approval' ? 'approval_needed' : 'stage_update',
-      stage === 'awaiting_approval' ? 'ממתין לאישורך' : 'עדכון עבודה',
-      `עבודה ${existing.orderNumber} — ${stage}`,
+      stage === 'awaiting_approval' ? `📋 ${patientName} — ממתין לאישורך` : `🔄 עדכון עבודה`,
+      stage === 'awaiting_approval'
+        ? `התכנון של ${patientName} מוכן ומחכה לאישורך`
+        : `${patientName} — ${stageLabel}`,
     )
 
     res.json(withId(order))
@@ -275,7 +294,8 @@ router.patch('/:id/approve', roleGuard('doctor'), auditLogger('order_approved'),
     })
 
     if (existing.assignedTechnicianId) {
-      notify(existing.assignedTechnicianId, existing.id, 'stage_update', 'עבודה אושרה', `עבודה ${existing.orderNumber} אושרה`)
+      const patientName = existing.patientCode || existing.orderNumber
+      notify(existing.assignedTechnicianId, existing.id, 'stage_update', `✅ עבודה אושרה`, `${patientName} אושרה על ידי הרופא — ניתן להמשיך לייצור`)
     }
 
     res.json(withId(order))
@@ -307,7 +327,8 @@ router.patch('/:id/reject', roleGuard('doctor'), auditLogger('order_rejected'), 
     })
 
     if (existing.assignedTechnicianId) {
-      notify(existing.assignedTechnicianId, existing.id, 'stage_update', 'עבודה חוזרת', `עבודה ${existing.orderNumber} נדחתה: ${reason}`)
+      const patientName = existing.patientCode || existing.orderNumber
+      notify(existing.assignedTechnicianId, existing.id, 'stage_update', `🔄 עבודה חוזרת לתיקון`, `${patientName} — נדחה: ${reason}`)
     }
 
     res.json(withId(order))

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getOrder, approveOrder, rejectOrder, updateStage, uploadStageImages } from '../api/workOrders'
+import { getOrder, approveOrder, rejectOrder, updateStage, assignTechnician } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import ProgressTimeline from '../components/ProgressTimeline'
@@ -23,6 +23,8 @@ export default function WorkOrderDetail() {
   const [stageNote, setStageNote] = useState('')
   const [advancing, setAdvancing] = useState(false)
   const [showStagePanel, setShowStagePanel] = useState(false)
+  const [technicians, setTechnicians] = useState<{ _id: string; name: string }[]>([])
+  const [assigningTech, setAssigningTech] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -30,6 +32,13 @@ export default function WorkOrderDetail() {
       .then((o) => { setOrder(o); upsertOrder(o) })
       .finally(() => setLoading(false))
   }, [id, upsertOrder])
+
+  // Fetch technicians for lab_manager assignment
+  useEffect(() => {
+    if (user?.role !== 'lab_manager') return
+    import('../api/team').then(m => m.getTeam()).then(data => setTechnicians(data.technicians))
+      .catch(() => {})
+  }, [user])
 
   if (loading) {
     return (
@@ -65,11 +74,16 @@ export default function WorkOrderDetail() {
   }
 
   // Stage advancement — for lab_manager / technician
+  const stageIdxLocal = STAGES.findIndex(s => s.key === order?.currentStage)
   const nextStageKey = (): Stage | null => {
     if (!order) return null
-    const idx = STAGES.findIndex(s => s.key === order.currentStage)
-    if (idx === -1 || idx >= STAGES.length - 1) return null
-    return STAGES[idx + 1].key
+    if (stageIdxLocal === -1 || stageIdxLocal >= STAGES.length - 1) return null
+    return STAGES[stageIdxLocal + 1].key
+  }
+  const prevStageKey = (): Stage | null => {
+    if (!order) return null
+    if (stageIdxLocal <= 0) return null
+    return STAGES[stageIdxLocal - 1].key
   }
 
   const handleAdvanceStage = async (targetStage: Stage) => {
@@ -83,6 +97,18 @@ export default function WorkOrderDetail() {
       setShowStagePanel(false)
     } finally {
       setAdvancing(false)
+    }
+  }
+
+  const handleAssignTechnician = async (techId: string) => {
+    if (!order) return
+    setAssigningTech(true)
+    try {
+      const updated = await assignTechnician(order._id, techId)
+      setOrder(updated)
+      upsertOrder(updated)
+    } finally {
+      setAssigningTech(false)
     }
   }
 
@@ -222,13 +248,34 @@ export default function WorkOrderDetail() {
               >
                 {/* Quick actions */}
                 <div className="grid grid-cols-1 gap-2">
-                  {nextStageKey() && (
+                  {/* Open order (first step) */}
+                  {order.currentStage === 'scan_received' && (
+                    <button
+                      onClick={() => handleAdvanceStage('order_opened')}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      📂 פתח עבודה
+                    </button>
+                  )}
+                  {/* Next stage */}
+                  {nextStageKey() && order.currentStage !== 'scan_received' && (
                     <button
                       onClick={() => handleAdvanceStage(nextStageKey()!)}
                       disabled={advancing}
                       className="w-full py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
                     >
                       {advancing ? 'מעדכן...' : `▶ קדם ל: ${STAGES.find(s => s.key === nextStageKey())?.label}`}
+                    </button>
+                  )}
+                  {/* Back stage */}
+                  {prevStageKey() && order.currentStage !== 'scan_received' && (
+                    <button
+                      onClick={() => handleAdvanceStage(prevStageKey()!)}
+                      disabled={advancing}
+                      className="w-full py-2.5 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
+                    >
+                      ◀ חזור ל: {STAGES.find(s => s.key === prevStageKey())?.label}
                     </button>
                   )}
                   {/* Send to doctor for approval */}
@@ -239,16 +286,6 @@ export default function WorkOrderDetail() {
                       className="w-full py-2.5 px-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
                     >
                       📤 שלח לאישור רופא
-                    </button>
-                  )}
-                  {/* Open order (first step) */}
-                  {order.currentStage === 'scan_received' && (
-                    <button
-                      onClick={() => handleAdvanceStage('order_opened')}
-                      disabled={advancing}
-                      className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors disabled:opacity-60"
-                    >
-                      📂 פתח עבודה
                     </button>
                   )}
                   {/* Ready to ship */}
@@ -262,6 +299,25 @@ export default function WorkOrderDetail() {
                     </button>
                   )}
                 </div>
+
+                {/* Assign technician (lab_manager only) */}
+                {user?.role === 'lab_manager' && technicians.length > 0 && (
+                  <div className="border-t border-gray-100 pt-3">
+                    <p className="text-xs font-medium text-gray-500 mb-2">👤 הקצה לטכנאי</p>
+                    <select
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      value={order.assignedTechnician?._id ?? ''}
+                      onChange={e => e.target.value && handleAssignTechnician(e.target.value)}
+                      disabled={assigningTech}
+                    >
+                      <option value="">-- בחר טכנאי --</option>
+                      {technicians.map(t => (
+                        <option key={t._id} value={t._id}>{t.name}</option>
+                      ))}
+                    </select>
+                    {assigningTech && <p className="text-xs text-gray-400 mt-1">מעדכן...</p>}
+                  </div>
+                )}
 
                 {/* Note */}
                 <textarea

@@ -4,9 +4,15 @@ import { motion } from 'framer-motion'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 
+// Exact brand navy from logo
+const NAVY = '#1a3a6b'
+const NAVY_LIGHT = '#22508f'
+const NAVY_DARK = '#0f2244'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -30,101 +36,163 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, #0f2044 0%, #1a3a6b 50%, #1e4d8c 100%)' }}
-    >
-      {/* Background pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #4a9eff 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #4a9eff 0%, transparent 70%)' }} />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center"
+      style={{ background: `linear-gradient(160deg, ${NAVY_DARK} 0%, ${NAVY} 45%, #1e5aa8 100%)` }}>
+
+      {/* Decorative circles */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.07]"
+        style={{ background: 'radial-gradient(circle, #fff 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-[0.05]"
+        style={{ background: 'radial-gradient(circle, #4af 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+      {/* Tooth silhouette watermark */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none"
+        style={{ fontSize: '28rem', lineHeight: 1 }}>
+        🦷
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="relative z-10 w-full max-w-md mx-4"
       >
-        {/* Navy top stripe */}
-        <div className="h-2 w-full" style={{ background: 'linear-gradient(90deg, #1a3a6b, #2563eb)' }} />
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-[0_32px_64px_rgba(0,0,0,0.35)] overflow-hidden">
 
-        <div className="p-8">
-          {/* Logo + brand */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-20 h-20 rounded-full overflow-hidden mb-4 shadow-lg border-4 border-white"
-              style={{ boxShadow: '0 8px 24px rgba(26,58,107,0.25)' }}>
-              <img src="/logo.png" className="w-full h-full object-contain" alt="GAZI DENT" />
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-wide" style={{ color: '#1a3a6b' }}>
-              GAZI DENT
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">מערכת מעקב עבודות שיניים</p>
+          {/* Top hero section */}
+          <div className="relative px-8 pt-10 pb-8 text-center"
+            style={{ background: `linear-gradient(160deg, ${NAVY_DARK} 0%, ${NAVY} 100%)` }}>
+            {/* Subtle wave at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 h-6 bg-white"
+              style={{ borderRadius: '50% 50% 0 0 / 100% 100% 0 0' }} />
+
+            {/* Logo */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="flex justify-center mb-4"
+            >
+              <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl"
+                style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
+                <img src="/logo.png" className="w-full h-full object-contain p-1" alt="GAZI DENT" />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <h1 className="text-3xl font-extrabold tracking-widest text-white mb-1">GAZI DENT</h1>
+              <p className="text-blue-200 text-sm font-light">מערכת מעקב עבודות מעבדת שיניים</p>
+            </motion.div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
-              <input
-                type="email"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-                style={{ '--tw-ring-color': '#1a3a6b' } as React.CSSProperties}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="doctor@clinic.co.il"
-                dir="ltr"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה</label>
-              <input
-                type="password"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                dir="ltr"
-              />
-            </div>
+          {/* Form section */}
+          <div className="px-8 py-8">
+            <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">כניסה למערכת</h2>
 
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2 text-center"
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: NAVY }}>
+                  כתובת אימייל
+                </label>
+                <div className="relative">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-base select-none">✉️</span>
+                  <input
+                    type="email"
+                    className="w-full border-2 border-gray-100 focus:border-[#1a3a6b] rounded-xl px-4 py-3 pr-9 text-sm outline-none transition-colors bg-gray-50 focus:bg-white"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    placeholder="doctor@clinic.co.il"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: NAVY }}>
+                  סיסמה
+                </label>
+                <div className="relative">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 select-none">🔒</span>
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    className="w-full border-2 border-gray-100 focus:border-[#1a3a6b] rounded-xl px-4 py-3 pr-9 pl-10 text-sm outline-none transition-colors bg-gray-50 focus:bg-white"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs transition-colors"
+                  >
+                    {showPw ? '🙈' : '👁️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3"
+                >
+                  <span>⚠️</span>
+                  <span>{error}</span>
+                </motion.div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl text-white font-bold text-base transition-all mt-2 relative overflow-hidden"
+                style={{
+                  background: loading
+                    ? '#94a3b8'
+                    : `linear-gradient(135deg, ${NAVY} 0%, #2563eb 100%)`,
+                  boxShadow: loading ? 'none' : `0 8px 24px rgba(26,58,107,0.4)`,
+                }}
               >
-                ⚠️ {error}
-              </motion.p>
-            )}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4"/>
+                      <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    מתחבר...
+                  </span>
+                ) : 'כניסה →'}
+              </button>
+            </form>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl text-white font-bold text-base transition-all disabled:opacity-70"
-              style={{ background: loading ? '#6b7280' : 'linear-gradient(90deg, #1a3a6b, #2563eb)' }}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  מתחבר...
-                </span>
-              ) : 'כניסה למערכת'}
-            </button>
-          </form>
-
-          <p className="text-center text-xs text-gray-400 mt-6">
-            © 2026 GAZI DENT · כל הזכויות שמורות
-          </p>
+          {/* Footer */}
+          <div className="px-8 pb-6 text-center">
+            <p className="text-xs text-gray-400">© 2026 GAZI DENT · כל הזכויות שמורות</p>
+          </div>
         </div>
+
+        {/* Tagline below card */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-white/40 text-xs mt-6"
+        >
+          מערכת מאובטחת · כניסה מורשית בלבד
+        </motion.p>
       </motion.div>
     </div>
   )
