@@ -12,6 +12,8 @@ import WorkOrderDetail from './pages/WorkOrderDetail'
 import NewWorkOrder from './pages/NewWorkOrder'
 import LabStats from './pages/LabStats'
 
+import TeamManagement from './pages/TeamManagement'
+
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -40,6 +42,7 @@ function ProtectedApp() {
       <Routes>
         <Route path="/dashboard" element={dashboardRoute()} />
         <Route path="/lab/stats" element={<LabStats />} />
+        <Route path="/lab/team" element={<TeamManagement />} />
         <Route path="/orders/new" element={<NewWorkOrder />} />
         <Route path="/orders/:id" element={<WorkOrderDetail />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

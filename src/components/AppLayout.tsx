@@ -10,6 +10,7 @@ const NAV_ITEMS = {
   lab_manager: [
     { to: '/dashboard', label: 'לוח עבודות', icon: '📋' },
     { to: '/lab/stats', label: 'סטטיסטיקות', icon: '📊' },
+    { to: '/lab/team', label: 'ניהול צוות', icon: '👥' },
   ],
   technician: [
     { to: '/dashboard', label: 'העבודות שלי', icon: '🔧' },

@@ -197,12 +197,22 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
       include: orderInclude,
     })
 
+    // Notify all lab_managers of this lab
+    const labManagers = await prisma.user.findMany({
+      where: { labId: doctor.labId, role: 'lab_manager', isActive: true },
+      select: { id: true },
+    })
+    labManagers.forEach(m =>
+      notify(m.id, order.id, 'stage_update', 'עבודה חדשה התקבלה 📥',
+        `עבודה ${order.orderNumber} — ${firstName} ${lastName} נשלחה ממרפאה`)
+    )
+
     res.status(201).json(withId(order))
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
 // ─── PATCH /api/work-orders/:id/stage ────────────────────────────────────────
-router.patch('/:id/stage', roleGuard('technician', 'lab_manager'), auditLogger('stage_updated'), async (req, res) => {
+router.patch('/:id/stage', roleGuard('technician', 'lab_manager', 'super_admin'), auditLogger('stage_updated'), async (req, res) => {
   try {
     const { stage, note } = req.body
     const existing = await prisma.workOrder.findUnique({ where: { id: req.params.id } })

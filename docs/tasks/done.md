@@ -38,3 +38,4 @@
 | Neon PostgreSQL | prisma db push הצליח, seed רץ |
 | Vercel deploy | 6 ENV vars + Production build ✅ |
 | ChatPanel | הוחלף useSocket ב-setInterval polling |
+| NewWorkOrder form | שדות חדשים: שם פרטי/משפחה, מין, ת. לידה (גיל אוטו'), ת. סריקה — הוסרו workType + dueDate |

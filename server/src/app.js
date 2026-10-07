@@ -29,6 +29,7 @@ app.use('/api/work-orders',   require('./routes/workOrders'))
 app.use('/api/messages',      require('./routes/messages'))
 app.use('/api/notifications', require('./routes/notifications'))
 app.use('/api/admin',         require('./routes/admin'))
+app.use('/api/team',          require('./routes/team'))
 
 app.get('/api/health', (req, res) =>
   res.json({ status: 'ok', uptime: process.uptime(), env: process.env.APP_ENV || 'local' })
