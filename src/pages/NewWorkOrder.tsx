@@ -114,25 +114,34 @@ export default function NewWorkOrder() {
           {/* Gender */}
           <div>
             <label className="label">מין</label>
-            <div className="flex gap-4 mt-1">
-              {['זכר', 'נקבה'].map(g => (
-                <label key={g} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
-                  form.gender === g
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 font-semibold'
-                    : 'border-gray-200 text-gray-600 hover:border-primary-300'
-                }`}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value={g}
-                    checked={form.gender === g}
-                    onChange={() => setForm(prev => ({ ...prev, gender: g }))}
-                    className="hidden"
-                  />
-                  <span>{g === 'זכר' ? '👨' : '👩'}</span>
-                  <span>{g}</span>
-                </label>
-              ))}
+            <div className="grid grid-cols-2 gap-3 mt-1">
+              {[{ val: 'זכר', icon: '♂', color: 'blue' }, { val: 'נקבה', icon: '♀', color: 'pink' }].map(({ val, icon, color }) => {
+                const selected = form.gender === val
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, gender: val }))}
+                    className={`relative flex flex-col items-center gap-1 py-4 rounded-2xl border-2 font-medium transition-all shadow-sm ${
+                      selected
+                        ? color === 'blue'
+                          ? 'border-blue-400 bg-blue-50 text-blue-700 shadow-blue-100'
+                          : 'border-pink-400 bg-pink-50 text-pink-700 shadow-pink-100'
+                        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className={`text-3xl ${selected ? '' : 'grayscale opacity-60'}`}>
+                      {val === 'זכר' ? '👨' : '👩'}
+                    </span>
+                    <span className="text-sm font-semibold">{val}</span>
+                    {selected && (
+                      <span className={`absolute top-2 left-2 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs ${
+                        color === 'blue' ? 'bg-blue-500' : 'bg-pink-500'
+                      }`}>✓</span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
