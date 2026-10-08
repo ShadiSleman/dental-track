@@ -510,9 +510,9 @@ export default function WorkOrderDetail() {
 
       {activeTab === 'chat' && <ChatPanel workOrderId={order._id} />}
 
-      {/* Delete — lab_manager + super_admin — bottom of page, subtle */}
+      {/* Delete — lab_manager + super_admin — very bottom, above mobile nav */}
       {(user?.role === 'lab_manager' || user?.role === 'super_admin') && (
-        <div className="pt-6 mt-2 border-t border-gray-100 flex justify-center">
+        <div className="pt-8 pb-24 md:pb-8 flex justify-center border-t border-gray-100 mt-4">
           <button
             onClick={handleDelete}
             disabled={deleting}
