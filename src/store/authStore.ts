@@ -30,7 +30,8 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'dt-auth',
-      // Always localStorage — no sessionStorage (fixes mobile Chrome/PWA redirect loop)
+      // Only persist token + user (not the hydration flag)
+      partialize: (s) => ({ token: s.token, user: s.user }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },
