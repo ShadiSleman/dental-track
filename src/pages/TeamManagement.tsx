@@ -60,7 +60,8 @@ export default function TeamManagement() {
   }
 
   const handleDelete = async (m: TeamMember) => {
-    if (!confirm(`למחוק את ${m.name}?`)) return
+    if (!confirm(`האם למחוק את ${m.name}?\n\nפעולה זו אינה ניתנת לביטול.`)) return
+    if (!confirm(`אישור סופי — למחוק לצמיתות את ${m.name}?`)) return
     try {
       await deleteMember(m._id)
       load()

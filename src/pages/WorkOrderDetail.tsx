@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getOrder, approveOrder, rejectOrder, updateStage, assignTechnician } from '../api/workOrders'
+import { useRef } from 'react'
+import { getOrder, approveOrder, rejectOrder, updateStage, assignTechnician, uploadOrderFiles } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import ProgressTimeline from '../components/ProgressTimeline'
@@ -25,6 +26,9 @@ export default function WorkOrderDetail() {
   const [showStagePanel, setShowStagePanel] = useState(false)
   const [technicians, setTechnicians] = useState<{ _id: string; name: string }[]>([])
   const [assigningTech, setAssigningTech] = useState(false)
+  const [uploadingFiles, setUploadingFiles] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!id) return
@@ -109,6 +113,24 @@ export default function WorkOrderDetail() {
       upsertOrder(updated)
     } finally {
       setAssigningTech(false)
+    }
+  }
+
+  const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!order || !e.target.files || e.target.files.length === 0) return
+    setUploadingFiles(true)
+    setUploadError('')
+    try {
+      const fd = new FormData()
+      Array.from(e.target.files).forEach(f => fd.append('files', f))
+      const updated = await uploadOrderFiles(order._id, fd)
+      setOrder(updated)
+      upsertOrder(updated)
+    } catch {
+      setUploadError('שגיאה בהעלאה — נסה שוב')
+    } finally {
+      setUploadingFiles(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -375,21 +397,49 @@ export default function WorkOrderDetail() {
 
       {activeTab === 'files' && (
         <div className="card space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="font-semibold text-gray-700">קבצים ({order.files.length})</h3>
-            {order.files.length > 1 && (
+            <div className="flex items-center gap-2">
+              {/* Download all */}
+              {order.files.length > 0 && (
+                <button
+                  onClick={() => order.files.forEach(f => {
+                    const a = document.createElement('a')
+                    a.href = f.url; a.download = f.name; a.target = '_blank'
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                  })}
+                  className="text-xs text-primary-600 font-medium px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                >
+                  ⬇️ הורד הכל
+                </button>
+              )}
+              {/* Upload — all users */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleUploadFiles}
+                accept="image/*,application/pdf,.stl,.obj,.ply"
+              />
               <button
-                onClick={() => order.files.forEach(f => {
-                  const a = document.createElement('a')
-                  a.href = f.url; a.download = f.name; a.target = '_blank'
-                  a.click()
-                })}
-                className="text-xs text-primary-600 font-medium px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingFiles}
+                className="text-xs text-white font-medium px-3 py-1.5 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-60 flex items-center gap-1"
               >
-                ⬇️ הורד הכל
+                {uploadingFiles ? (
+                  <>
+                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4"/>
+                      <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    מעלה...
+                  </>
+                ) : '📎 הוסף קבצים'}
               </button>
-            )}
+            </div>
           </div>
+          {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
           {order.files.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-6">אין קבצים מצורפים לעבודה זו</p>
           ) : (

@@ -33,6 +33,12 @@ export const uploadStageImages = (id: string, data: FormData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   }).then((r) => r.data)
 
+export const uploadOrderFiles = (id: string, data: FormData) =>
+  api.post<WorkOrder>(`/work-orders/${id}/files`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  }).then((r) => r.data)
+
 export const saveSignature = (id: string, signature: string) =>
   api.patch<WorkOrder>(`/work-orders/${id}/signature`, { signature }).then((r) => r.data)
 

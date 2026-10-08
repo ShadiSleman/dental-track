@@ -347,6 +347,27 @@ router.patch('/:id/assign', roleGuard('lab_manager'), async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
+// ─── POST /api/work-orders/:id/files — add files to existing order ───────────
+router.post('/:id/files', upload.array('files'), async (req, res) => {
+  try {
+    const existing = await prisma.workOrder.findUnique({ where: { id: req.params.id } })
+    if (!existing) return res.status(404).json({ error: 'Not found' })
+
+    const newFiles = []
+    for (const f of (req.files || [])) {
+      const url = await uploadToR2(f.buffer, f.mimetype, f.originalname, 'orders')
+      if (url) newFiles.push({ url, type: f.mimetype, name: f.originalname, uploadedAt: new Date().toISOString() })
+    }
+
+    const order = await prisma.workOrder.update({
+      where: { id: req.params.id },
+      data:  { files: { push: newFiles } },
+      include: orderInclude,
+    })
+    res.json(withId(order))
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
 // ─── POST /api/work-orders/:id/images ────────────────────────────────────────
 router.post('/:id/images', upload.array('images'), async (req, res) => {
   try {

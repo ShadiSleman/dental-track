@@ -82,7 +82,7 @@ function ProfileButton() {
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            className="absolute left-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+            className="absolute right-0 top-12 w-[min(260px,calc(100vw-1rem))] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
           >
             {/* User info section */}
             <div className="px-4 py-4 bg-gradient-to-br from-primary-50 to-white border-b border-gray-100">
@@ -118,12 +118,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" className="h-10 w-10 object-contain" alt="GAZI DENT" />
+            <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="GAZI DENT" />
             <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide hidden sm:block">GAZI DENT</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
             <ProfileButton />
           </div>
