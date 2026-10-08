@@ -25,13 +25,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { token, user } = await login(email, password)
-      // Set remember-me flag BEFORE setAuth so the custom storage uses it
-      if (rememberMe) {
-        localStorage.setItem('dt-remember', '1')
-      } else {
-        localStorage.removeItem('dt-remember')
-      }
       setAuth(token, user)
+      // If "remember me" not checked, clear storage when tab closes
+      if (!rememberMe) {
+        window.addEventListener('beforeunload', () => {
+          localStorage.removeItem('dt-auth')
+        }, { once: true })
+      }
       if (user.role === 'super_admin') navigate('/admin')
       else navigate('/dashboard')
     } catch {

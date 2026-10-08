@@ -53,12 +53,26 @@ function ProtectedApp() {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
+  const hydrated = useAuthStore((s) => s._hasHydrated)
+  // Wait for zustand to load from localStorage before deciding to redirect
+  // (fixes mobile Chrome/PWA redirect-to-login loop)
+  if (!hydrated) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   if (!token) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
+  const hydrated = useAuthStore((s) => s._hasHydrated)
+  if (!hydrated) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   if (!user) return <Navigate to="/login" replace />
   if (user.role !== 'super_admin') return <Navigate to="/dashboard" replace />
   return <>{children}</>
