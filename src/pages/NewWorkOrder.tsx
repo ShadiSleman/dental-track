@@ -3,15 +3,64 @@ import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/workOrders'
 import api from '../api/client'
 
-// Calculate age from birthDate string
-const calcAge = (birthDate: string): number | null => {
-  if (!birthDate) return null
-  const today = new Date()
-  const birth = new Date(birthDate)
+const HE_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
+const THIS_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: 100 }, (_, i) => THIS_YEAR - i)
+const DAYS  = Array.from({ length: 31 }, (_, i) => i + 1)
+
+// Convert d/m/y parts to ISO string or ''
+const partsToISO = (d: string, m: string, y: string) => {
+  if (!d || !m || !y) return ''
+  const mm = String(Number(m)).padStart(2, '0')
+  const dd = String(Number(d)).padStart(2, '0')
+  return `${y}-${mm}-${dd}`
+}
+
+const calcAge = (iso: string): number | null => {
+  if (!iso) return null
+  const today = new Date(), birth = new Date(iso)
   let age = today.getFullYear() - birth.getFullYear()
-  const m = today.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  const mo = today.getMonth() - birth.getMonth()
+  if (mo < 0 || (mo === 0 && today.getDate() < birth.getDate())) age--
   return age >= 0 ? age : null
+}
+
+// Date select component
+function DateSelect({ label, value, onChange, maxYear }: {
+  label: string; value: string; onChange: (iso: string) => void; maxYear?: number
+}) {
+  const [d, setD] = useState('')
+  const [m, setM] = useState('')
+  const [y, setY] = useState('')
+
+  const upd = (nd: string, nm: string, ny: string) => {
+    setD(nd); setM(nm); setY(ny)
+    onChange(partsToISO(nd, nm, ny))
+  }
+
+  const years = maxYear ? YEARS.filter(yr => yr <= maxYear) : YEARS
+  const selectCls = 'flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white appearance-none cursor-pointer'
+
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <div className="flex gap-2 mt-1">
+        <select value={d} onChange={e => upd(e.target.value, m, y)} className={selectCls}>
+          <option value="">יום</option>
+          {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <select value={m} onChange={e => upd(d, e.target.value, y)} className={selectCls}>
+          <option value="">חודש</option>
+          {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
+        </select>
+        <select value={y} onChange={e => upd(d, m, e.target.value)} className={selectCls}>
+          <option value="">שנה</option>
+          {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
+        </select>
+      </div>
+      {value && <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">{new Date(value).toLocaleDateString('he-IL')}</p>}
+    </div>
+  )
 }
 
 export default function NewWorkOrder() {
@@ -23,9 +72,12 @@ export default function NewWorkOrder() {
     lastName:  '',
     gender:    '',
     birthDate: '',
-    scanDate:  new Date().toISOString().split('T')[0], // default today
+    scanDate:  new Date().toISOString().split('T')[0],
     notes:     '',
   })
+
+  const setField = (key: keyof typeof form) => (val: string) =>
+    setForm(prev => ({ ...prev, [key]: val }))
   const [files, setFiles]   = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
@@ -37,9 +89,6 @@ export default function NewWorkOrder() {
 
   const age = calcAge(form.birthDate)
 
-  const set = (key: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm(prev => ({ ...prev, [key]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,7 +145,7 @@ export default function NewWorkOrder() {
               <input
                 className="input"
                 value={form.firstName}
-                onChange={set('firstName')}
+                onChange={e => setField('firstName')(e.target.value)}
                 autoComplete="off"
               />
             </div>
@@ -105,73 +154,52 @@ export default function NewWorkOrder() {
               <input
                 className="input"
                 value={form.lastName}
-                onChange={set('lastName')}
+                onChange={e => setField('lastName')(e.target.value)}
                 autoComplete="off"
               />
             </div>
           </div>
 
-          {/* Gender */}
+          {/* Gender — toggle pills */}
           <div>
             <label className="label">מין</label>
-            <div className="grid grid-cols-2 gap-3 mt-1">
-              {[{ val: 'זכר', icon: '♂', color: 'blue' }, { val: 'נקבה', icon: '♀', color: 'pink' }].map(({ val, icon, color }) => {
-                const selected = form.gender === val
+            <div className="flex gap-2 mt-1">
+              {([
+                { val: 'זכר',   emoji: '👨', bg: 'bg-blue-50',  border: 'border-blue-400',  text: 'text-blue-700'  },
+                { val: 'נקבה', emoji: '👩', bg: 'bg-pink-50',  border: 'border-pink-400',  text: 'text-pink-700'  },
+              ] as const).map(({ val, emoji, bg, border, text }) => {
+                const sel = form.gender === val
                 return (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setForm(prev => ({ ...prev, gender: val }))}
-                    className={`relative flex flex-col items-center gap-1 py-4 rounded-2xl border-2 font-medium transition-all shadow-sm ${
-                      selected
-                        ? color === 'blue'
-                          ? 'border-blue-400 bg-blue-50 text-blue-700 shadow-blue-100'
-                          : 'border-pink-400 bg-pink-50 text-pink-700 shadow-pink-100'
-                        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                  <button key={val} type="button"
+                    onClick={() => setForm(p => ({ ...p, gender: p.gender === val ? '' : val }))}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-semibold text-sm transition-all ${
+                      sel ? `${bg} ${border} ${text}` : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
                     }`}
                   >
-                    <span className={`text-3xl ${selected ? '' : 'grayscale opacity-60'}`}>
-                      {val === 'זכר' ? '👨' : '👩'}
-                    </span>
-                    <span className="text-sm font-semibold">{val}</span>
-                    {selected && (
-                      <span className={`absolute top-2 left-2 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs ${
-                        color === 'blue' ? 'bg-blue-500' : 'bg-pink-500'
-                      }`}>✓</span>
-                    )}
+                    <span className={sel ? '' : 'opacity-50'}>{emoji}</span> {val}
+                    {sel && <span className="text-xs">✓</span>}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Birth date + age */}
+          {/* Birth date — simple dropdowns */}
           <div>
-            <label className="label">תאריך לידה</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="date"
-                className="input flex-1"
-                value={form.birthDate}
-                onChange={set('birthDate')}
-                max={new Date().toISOString().split('T')[0]}
-              />
-              {age !== null && (
-                <span className="text-sm text-gray-500 whitespace-nowrap">
-                  גיל: <strong>{age}</strong>
-                </span>
-              )}
-            </div>
+            <DateSelect
+              label={`תאריך לידה${age !== null ? ` — גיל: ${age}` : ''}`}
+              value={form.birthDate}
+              onChange={setField('birthDate')}
+              maxYear={THIS_YEAR}
+            />
           </div>
 
-          {/* Scan date */}
+          {/* Scan date — simple dropdowns */}
           <div>
-            <label className="label">תאריך סריקת עבודה *</label>
-            <input
-              type="date"
-              className="input"
+            <DateSelect
+              label="תאריך סריקת עבודה *"
               value={form.scanDate}
-              onChange={set('scanDate')}
+              onChange={setField('scanDate')}
             />
           </div>
         </div>
@@ -183,7 +211,7 @@ export default function NewWorkOrder() {
             className="input"
             rows={3}
             value={form.notes}
-            onChange={set('notes')}
+            onChange={e => setField('notes')(e.target.value)}
             placeholder="הנחיות, צבע, מידות מיוחדות..."
           />
         </div>
