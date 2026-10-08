@@ -18,10 +18,17 @@ const orderInclude = {
 }
 
 // Generate next order number — WO-YYYY-NNNN
+// Uses MAX instead of COUNT to survive deletions and concurrent requests
 const nextOrderNumber = async () => {
-  const year  = new Date().getFullYear()
-  const count = await prisma.workOrder.count()
-  return `WO-${year}-${String(count + 1).padStart(4, '0')}`
+  const year   = new Date().getFullYear()
+  const prefix = `WO-${year}-`
+  const last   = await prisma.workOrder.findFirst({
+    where:   { orderNumber: { startsWith: prefix } },
+    orderBy: { orderNumber: 'desc' },
+    select:  { orderNumber: true },
+  })
+  const lastNum = last ? parseInt(last.orderNumber.slice(prefix.length), 10) : 0
+  return `${prefix}${String(lastNum + 1).padStart(4, '0')}`
 }
 
 // Notify a user (fire-and-forget)
@@ -221,10 +228,14 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
       images: [],
     }]
 
-    const order = await prisma.workOrder.create({
-      data: {
-        orderNumber: await nextOrderNumber(),
-        patientCode: `${firstName} ${lastName}`,
+    // Retry up to 5 times in case of concurrent race condition on orderNumber unique constraint
+    let order
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        order = await prisma.workOrder.create({
+          data: {
+            orderNumber: await nextOrderNumber(),
+            patientCode: `${firstName} ${lastName}`,
         firstName,
         lastName,
         gender:    gender   || null,
@@ -240,7 +251,14 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
         files,
       },
       include: orderInclude,
-    })
+        })
+        break // success — exit retry loop
+      } catch (createErr) {
+        if (attempt === 4 || !createErr.message?.includes('Unique constraint')) throw createErr
+        // Unique constraint on orderNumber — wait briefly and retry with next number
+        await new Promise(r => setTimeout(r, 50 * (attempt + 1)))
+      }
+    }
 
     // Notify all lab_managers of this lab
     const labManagers = await prisma.user.findMany({
