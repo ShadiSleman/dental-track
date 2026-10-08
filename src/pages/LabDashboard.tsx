@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { getAllOrders } from '../api/workOrders'
+import { getAllOrders, getOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
 import type { WorkOrder } from '../types'
@@ -32,15 +32,32 @@ const matchSearch = (o: WorkOrder, q: string) => {
 const PAGE_SIZE = 20
 
 export default function LabDashboard() {
-  const { orders, setOrders, loading, setLoading } = useOrdersStore()
+  const { orders, setOrders, upsertOrder, loading, setLoading } = useOrdersStore()
   const [filter, setFilter] = useState<FilterKey>('all')
   const [search, setSearch] = useState('')
   const [page, setPage]     = useState(1)
 
   useEffect(() => {
     setLoading(true)
-    getAllOrders().then(setOrders).finally(() => setLoading(false))
-  }, [setOrders, setLoading])
+    getAllOrders()
+      .then((data) => {
+        setOrders(data)
+        // Background-prefetch full detail for the 5 most recent orders (especially for mobile)
+        // Staggered to avoid hammering the API; orders already fully cached are skipped
+        const cached = useOrdersStore.getState().orders
+        let delay = 1200
+        data.slice(0, 5).forEach((o: WorkOrder) => {
+          const inCache = cached.find((c) => c._id === o._id) as (WorkOrder & { stageHistory?: unknown[] }) | undefined
+          if (!inCache?.stageHistory) {
+            setTimeout(() => {
+              getOrder(o._id).then(upsertOrder).catch(() => {})
+            }, delay)
+            delay += 800 // stagger: 1.2s, 2s, 2.8s, 3.6s, 4.4s
+          }
+        })
+      })
+      .finally(() => setLoading(false))
+  }, [setOrders, setLoading, upsertOrder])
 
   // Reset page on filter/search change
   useEffect(() => { setPage(1) }, [filter, search])

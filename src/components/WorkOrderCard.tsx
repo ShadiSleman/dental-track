@@ -1,14 +1,41 @@
 import { useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { WorkOrder } from '../types'
 import { STAGES } from '../types'
+import { getOrder } from '../api/workOrders'
+import { useOrdersStore } from '../store/ordersStore'
 
 interface Props {
   order: WorkOrder
 }
 
+// Prefetch full order detail (with stageHistory) on hover/touch
+// so by the time user taps, data is already in cache
+function usePrefetch(order: WorkOrder) {
+  const upsertOrder = useOrdersStore((s) => s.upsertOrder)
+  const orders = useOrdersStore((s) => s.orders)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const start = () => {
+    // Already have full data → nothing to do
+    const cached = orders.find((o) => o._id === order._id) as (WorkOrder & { stageHistory?: unknown[] }) | undefined
+    if (cached?.stageHistory) return
+    timerRef.current = setTimeout(() => {
+      getOrder(order._id).then(upsertOrder).catch(() => {})
+    }, 180)
+  }
+
+  const cancel = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
+
+  return { start, cancel }
+}
+
 export default function WorkOrderCard({ order }: Props) {
   const navigate = useNavigate()
+  const { start, cancel } = usePrefetch(order)
   const stageInfo = STAGES.find((s) => s.key === order.currentStage)
   const stageIdx = STAGES.findIndex((s) => s.key === order.currentStage)
   const progress = Math.round(((stageIdx + 1) / STAGES.length) * 100)
@@ -21,6 +48,9 @@ export default function WorkOrderCard({ order }: Props) {
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={() => navigate(`/orders/${order._id}`)}
+      onMouseEnter={start}
+      onMouseLeave={cancel}
+      onTouchStart={start}
       className={`card cursor-pointer hover:shadow-md transition-shadow border-r-4 ${
         order.isDelayed
           ? 'border-r-red-400'

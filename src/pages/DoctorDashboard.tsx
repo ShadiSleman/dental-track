@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { getMyOrders } from '../api/workOrders'
+import { getMyOrders, getOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
 import type { WorkOrder } from '../types'
@@ -28,14 +28,28 @@ const matchSearch = (o: WorkOrder, q: string) => {
 }
 
 export default function DoctorDashboard() {
-  const { orders, setOrders, loading, setLoading } = useOrdersStore()
+  const { orders, setOrders, upsertOrder, loading, setLoading } = useOrdersStore()
   const [tab, setTab]       = useState<TabKey>('all')
   const [search, setSearch] = useState('')
 
   useEffect(() => {
     setLoading(true)
-    getMyOrders().then(setOrders).finally(() => setLoading(false))
-  }, [setOrders, setLoading])
+    getMyOrders()
+      .then((data) => {
+        setOrders(data)
+        // Prefetch full detail for the 5 most recent orders (for mobile)
+        const cached = useOrdersStore.getState().orders
+        let delay = 1200
+        data.slice(0, 5).forEach((o: WorkOrder) => {
+          const inCache = cached.find((c) => c._id === o._id) as (WorkOrder & { stageHistory?: unknown[] }) | undefined
+          if (!inCache?.stageHistory) {
+            setTimeout(() => { getOrder(o._id).then(upsertOrder).catch(() => {}) }, delay)
+            delay += 800
+          }
+        })
+      })
+      .finally(() => setLoading(false))
+  }, [setOrders, setLoading, upsertOrder])
 
   const filtered = orders.filter((o: WorkOrder) => {
     const matchTab =
