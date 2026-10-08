@@ -190,7 +190,6 @@ export default function NewWorkOrder() {
               label={`תאריך לידה${age !== null ? ` — גיל: ${age}` : ''}`}
               value={form.birthDate}
               onChange={setField('birthDate')}
-              maxYear={THIS_YEAR}
             />
           </div>
 
