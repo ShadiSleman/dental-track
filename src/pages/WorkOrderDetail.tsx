@@ -119,8 +119,8 @@ export default function WorkOrderDetail() {
 
   const handleDelete = async () => {
     if (!order) return
-    if (!confirm(`למחוק את העבודה ${order._id ? order.orderNumber ?? '' : ''}?\n\nכל הנתונים יימחקו לצמיתות.`)) return
-    if (!confirm(`אישור סופי — למחוק לצמיתות את עבודה ${order.orderNumber ?? ''}?`)) return
+    if (!confirm(`למחוק את העבודה ${order.orderNumber}?\n\nכל הנתונים יימחקו לצמיתות.`)) return
+    if (!confirm(`אישור סופי — למחוק לצמיתות את עבודה ${order.orderNumber}?`)) return
     setDeleting(true)
     try {
       await deleteOrder(order._id)
@@ -176,16 +176,6 @@ export default function WorkOrderDetail() {
             {order.isDelayed && <span className="badge bg-red-100 text-red-700 block">מאחר</span>}
             {order.requiresDoctorApproval && (
               <span className="badge bg-yellow-100 text-yellow-700 block">ממתין לאישורך</span>
-            )}
-            {/* Delete button — lab_manager only */}
-            {user?.role === 'lab_manager' && (
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="mt-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded-lg px-2 py-1 transition-colors disabled:opacity-50 flex items-center gap-1"
-              >
-                🗑️ מחק עבודה
-              </button>
             )}
           </div>
         </div>
@@ -395,6 +385,23 @@ export default function WorkOrderDetail() {
             )}
           </AnimatePresence>
         </motion.div>
+      )}
+
+      {/* Delete order — lab_manager + super_admin */}
+      {(user?.role === 'lab_manager' || user?.role === 'super_admin') && (
+        <div className="card border border-red-200 bg-red-50 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-red-700">🗑️ מחיקת עבודה</p>
+            <p className="text-xs text-red-500 mt-0.5">הפעולה בלתי הפיכה — כל הנתונים יימחקו</p>
+          </div>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-shrink-0 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+          >
+            {deleting ? 'מוחק...' : 'מחק'}
+          </button>
+        </div>
       )}
 
       {/* Tabs */}
