@@ -25,40 +25,87 @@ const calcAge = (iso: string): number | null => {
   return age >= 0 ? age : null
 }
 
-// Date select component
+// Parse dd/mm/yyyy or dd.mm.yyyy typed text → ISO
+const textToISO = (text: string): string => {
+  const clean = text.replace(/\./g, '/')
+  const parts = clean.split('/')
+  if (parts.length !== 3) return ''
+  const [dd, mm, yyyy] = parts
+  if (!dd || !mm || !yyyy || yyyy.length < 4) return ''
+  const iso = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`
+  return isNaN(new Date(iso).getTime()) ? '' : iso
+}
+
+// Date select + manual input
 function DateSelect({ label, value, onChange, maxYear }: {
   label: string; value: string; onChange: (iso: string) => void; maxYear?: number
 }) {
   const [d, setD] = useState('')
   const [m, setM] = useState('')
   const [y, setY] = useState('')
+  const [manual, setManual] = useState(false)
+  const [typed, setTyped]   = useState('')
 
-  const upd = (nd: string, nm: string, ny: string) => {
+  const updSelects = (nd: string, nm: string, ny: string) => {
     setD(nd); setM(nm); setY(ny)
     onChange(partsToISO(nd, nm, ny))
   }
 
+  const onTyped = (val: string) => {
+    setTyped(val)
+    onChange(textToISO(val))
+  }
+
   const years = maxYear ? YEARS.filter(yr => yr <= maxYear) : YEARS
-  const selectCls = 'flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white appearance-none cursor-pointer'
+  const selectCls = 'flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white cursor-pointer'
+  const displayDate = value ? new Date(value).toLocaleDateString('he-IL') : ''
 
   return (
     <div>
-      <label className="label">{label}</label>
-      <div className="flex gap-2 mt-1">
-        <select value={d} onChange={e => upd(e.target.value, m, y)} className={selectCls}>
-          <option value="">יום</option>
-          {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <select value={m} onChange={e => upd(d, e.target.value, y)} className={selectCls}>
-          <option value="">חודש</option>
-          {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
-        </select>
-        <select value={y} onChange={e => upd(d, m, e.target.value)} className={selectCls}>
-          <option value="">שנה</option>
-          {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
-        </select>
+      <div className="flex items-center justify-between mb-1">
+        <label className="label mb-0">{label}</label>
+        <button
+          type="button"
+          onClick={() => { setManual(v => !v); onChange(''); setTyped(''); setD(''); setM(''); setY('') }}
+          className="text-xs text-primary-500 hover:text-primary-700 underline"
+        >
+          {manual ? 'בחר מרשימה' : 'הקלדה ידנית'}
+        </button>
       </div>
-      {value && <p className="text-xs text-gray-400 mt-1 text-left" dir="ltr">{new Date(value).toLocaleDateString('he-IL')}</p>}
+
+      {manual ? (
+        <div>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="dd/mm/yyyy"
+            value={typed}
+            onChange={e => onTyped(e.target.value)}
+            className="input text-left"
+            dir="ltr"
+            maxLength={10}
+          />
+          {value && <p className="text-xs text-emerald-600 mt-1">✓ {displayDate}</p>}
+        </div>
+      ) : (
+        <div>
+          <div className="flex gap-2">
+            <select value={d} onChange={e => updSelects(e.target.value, m, y)} className={selectCls}>
+              <option value="">יום</option>
+              {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <select value={m} onChange={e => updSelects(d, e.target.value, y)} className={selectCls}>
+              <option value="">חודש</option>
+              {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
+            </select>
+            <select value={y} onChange={e => updSelects(d, m, e.target.value)} className={selectCls}>
+              <option value="">שנה</option>
+              {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
+            </select>
+          </div>
+          {value && <p className="text-xs text-emerald-600 mt-1">✓ {displayDate}</p>}
+        </div>
+      )}
     </div>
   )
 }
@@ -160,27 +207,26 @@ export default function NewWorkOrder() {
             </div>
           </div>
 
-          {/* Gender — toggle pills */}
+          {/* Gender — segmented control */}
           <div>
             <label className="label">מין</label>
-            <div className="flex gap-2 mt-1">
-              {([
-                { val: 'זכר',   emoji: '👨', bg: 'bg-blue-50',  border: 'border-blue-400',  text: 'text-blue-700'  },
-                { val: 'נקבה', emoji: '👩', bg: 'bg-pink-50',  border: 'border-pink-400',  text: 'text-pink-700'  },
-              ] as const).map(({ val, emoji, bg, border, text }) => {
-                const sel = form.gender === val
-                return (
-                  <button key={val} type="button"
-                    onClick={() => setForm(p => ({ ...p, gender: p.gender === val ? '' : val }))}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-semibold text-sm transition-all ${
-                      sel ? `${bg} ${border} ${text}` : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className={sel ? '' : 'opacity-50'}>{emoji}</span> {val}
-                    {sel && <span className="text-xs">✓</span>}
-                  </button>
-                )
-              })}
+            <div className="flex mt-1 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 p-1 gap-1">
+              {[
+                { val: 'זכר',  label: 'זכר ♂',  active: 'bg-[#1a3a6b] text-white' },
+                { val: 'נקבה', label: 'נקבה ♀', active: 'bg-[#d946ef] text-white'  },
+                { val: '',     label: 'לא ידוע',  active: 'bg-gray-400 text-white'   },
+              ].map(({ val, label, active }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, gender: val }))}
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 ${
+                    form.gender === val ? active : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
