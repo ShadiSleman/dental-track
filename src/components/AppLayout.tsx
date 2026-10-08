@@ -125,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="GAZI DENT" />
-            <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide hidden sm:block">GAZI DENT</span>
+            <span className="font-extrabold text-[#1a3a6b] text-base sm:text-lg tracking-wide">GAZI DENT</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
