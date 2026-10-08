@@ -48,8 +48,15 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Cache API responses for offline use
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // skipWaiting + clientsClaim: new SW activates immediately on all tabs
+        // This prevents old cached JS from mixing with new HTML after deploy
+        skipWaiting: true,
+        clientsClaim: true,
+        // Do NOT cache HTML — always serve fresh from network so it always points
+        // to the correct hashed JS/CSS bundles (prevents version mismatch crashes)
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
+        // Never serve index.html from cache
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -57,9 +64,10 @@ export default defineConfig({
             options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } },
           },
           {
+            // API: NetworkFirst — always try network, fall back to cache if offline
             urlPattern: /\/api\/.*/i,
             handler: 'NetworkFirst',
-            options: { cacheName: 'api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 } },
+            options: { cacheName: 'api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 }, networkTimeoutSeconds: 8 },
           },
         ],
       },
