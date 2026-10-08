@@ -1,14 +1,11 @@
 // Prisma Client singleton — prevents connection-pool exhaustion in serverless
+// Cached on globalThis for BOTH dev and production (Vercel reuses the module)
 const { PrismaClient } = require('@prisma/client')
 
-const globalForPrisma = globalThis
-
-const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-})
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
+if (!globalThis.__prisma) {
+  globalThis.__prisma = new PrismaClient({
+    log: ['error'],
+  })
 }
 
-module.exports = prisma
+module.exports = globalThis.__prisma

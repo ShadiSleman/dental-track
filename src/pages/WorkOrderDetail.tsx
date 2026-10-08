@@ -14,10 +14,12 @@ export default function WorkOrderDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const { upsertOrder } = useOrdersStore()
+  const { upsertOrder, orders } = useOrdersStore()
 
-  const [order, setOrder] = useState<WorkOrder | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Show cached order immediately (if available from dashboard list) — no spinner wait
+  const cachedOrder = orders.find((o: WorkOrder) => o._id === id) ?? null
+  const [order, setOrder] = useState<WorkOrder | null>(cachedOrder)
+  const [loading, setLoading] = useState(!cachedOrder) // skip spinner if we have cache
   const [rejectReason, setRejectReason] = useState('')
   const [showReject, setShowReject] = useState(false)
   const [activeTab, setActiveTab] = useState<'timeline' | 'files' | 'chat'>('timeline')
@@ -33,10 +35,12 @@ export default function WorkOrderDetail() {
 
   useEffect(() => {
     if (!id) return
+    // Always fetch fresh data in background (cache shown instantly above)
     getOrder(id)
       .then((o) => { setOrder(o); upsertOrder(o) })
+      .catch(() => {})
       .finally(() => setLoading(false))
-  }, [id, upsertOrder])
+  }, [id]) // eslint-disable-line
 
   // Fetch technicians for lab_manager assignment
   useEffect(() => {

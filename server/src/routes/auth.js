@@ -5,8 +5,17 @@ const prisma  = require('../lib/prisma')
 const authJwt = require('../middleware/authJwt')
 const { withId } = require('../lib/withId')
 
+// Embed key fields in JWT so authJwt can skip the DB lookup on every request
 const sign = (user) =>
-  jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' })
+  jwt.sign({
+    sub:      user.id,
+    role:     user.role,
+    labId:    user.labId     || null,
+    clinicId: user.clinicId  || null,
+    name:     user.name,
+    email:    user.email,
+    isActive: user.isActive,
+  }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {

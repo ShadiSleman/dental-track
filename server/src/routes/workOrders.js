@@ -9,12 +9,41 @@ const { withId } = require('../lib/withId')
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } })
 
-// Prisma include spec — same shape as Mongoose populate
+// Full include — used for single order detail (includes stageHistory, files)
 const orderInclude = {
   doctor:             { select: { id: true, name: true, email: true, role: true } },
   clinic:             { select: { id: true, name: true, address: true, phone: true } },
   lab:                { select: { id: true, name: true, address: true, phone: true } },
   assignedTechnician: { select: { id: true, name: true, email: true } },
+}
+
+// Light include for LIST views — omits heavy JSON fields (stageHistory, files)
+// stageHistory and files are fetched only when opening a specific order
+const orderListSelect = {
+  id: true,
+  orderNumber: true,
+  patientCode: true,
+  firstName: true,
+  lastName: true,
+  gender: true,
+  birthDate: true,
+  scanDate: true,
+  dueDate: true,
+  workType: true,
+  currentStage: true,
+  requiresDoctorApproval: true,
+  isDelayed: true,
+  createdAt: true,
+  updatedAt: true,
+  doctorId: true,
+  labId: true,
+  clinicId: true,
+  assignedTechnicianId: true,
+  notes: true,
+  doctor:             { select: { id: true, name: true, email: true, role: true } },
+  clinic:             { select: { id: true, name: true } },
+  lab:                { select: { id: true, name: true } },
+  assignedTechnician: { select: { id: true, name: true } },
 }
 
 // Generate next order number — WO-YYYY-NNNN
@@ -132,7 +161,7 @@ router.get('/mine', async (req, res) => {
 
     const orders = await prisma.workOrder.findMany({
       where,
-      include:  orderInclude,
+      select:  orderListSelect,
       orderBy: { createdAt: 'desc' },
     })
     res.json(withId(orders))
@@ -159,9 +188,8 @@ router.get('/', roleGuard('lab_manager', 'super_admin', 'courier'), async (req, 
 
     const orders = await prisma.workOrder.findMany({
       where,
-      include:  orderInclude,
+      select:  orderListSelect,
       orderBy: { createdAt: 'desc' },
-      // Pagination for performance — default 100 latest
       take: req.query.limit ? parseInt(req.query.limit) : 100,
     })
     res.json(withId(orders))
