@@ -387,23 +387,6 @@ export default function WorkOrderDetail() {
         </motion.div>
       )}
 
-      {/* Delete order — lab_manager + super_admin */}
-      {(user?.role === 'lab_manager' || user?.role === 'super_admin') && (
-        <div className="card border border-red-200 bg-red-50 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-red-700">🗑️ מחיקת עבודה</p>
-            <p className="text-xs text-red-500 mt-0.5">הפעולה בלתי הפיכה — כל הנתונים יימחקו</p>
-          </div>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex-shrink-0 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
-          >
-            {deleting ? 'מוחק...' : 'מחק'}
-          </button>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200">
         {(['timeline', 'files', 'chat'] as const).map((tab) => (
@@ -526,6 +509,19 @@ export default function WorkOrderDetail() {
       )}
 
       {activeTab === 'chat' && <ChatPanel workOrderId={order._id} />}
+
+      {/* Delete — lab_manager + super_admin — bottom of page, subtle */}
+      {(user?.role === 'lab_manager' || user?.role === 'super_admin') && (
+        <div className="pt-6 mt-2 border-t border-gray-100 flex justify-center">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-sm text-red-400 hover:text-red-600 transition-colors disabled:opacity-40 flex items-center gap-1.5 underline underline-offset-2"
+          >
+            🗑️ {deleting ? 'מוחק...' : 'מחק עבודה זו'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
