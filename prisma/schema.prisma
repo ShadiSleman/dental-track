@@ -119,6 +119,14 @@ model WorkOrder {
 
   messages      Message[]
   notifications Notification[]
+
+  // Indexes for performance (hundreds of users, fast search & filtering)
+  @@index([labId])
+  @@index([doctorId])
+  @@index([currentStage])
+  @@index([labId, currentStage])
+  @@index([patientCode])
+  @@index([createdAt])
 }
 
 model Message {
@@ -144,6 +152,9 @@ model Notification {
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 model AuditLog {

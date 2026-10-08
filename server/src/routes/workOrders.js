@@ -139,10 +139,23 @@ router.get('/', roleGuard('lab_manager', 'super_admin', 'courier'), async (req, 
     if (req.user.role === 'lab_manager') where.labId = req.user.labId
     if (req.query.stage) where.currentStage = { in: req.query.stage.split(',') }
 
+    // Search by WO number or patient name
+    if (req.query.search) {
+      const q = req.query.search.trim()
+      where.OR = [
+        { orderNumber:  { contains: q, mode: 'insensitive' } },
+        { patientCode:  { contains: q, mode: 'insensitive' } },
+        { firstName:    { contains: q, mode: 'insensitive' } },
+        { lastName:     { contains: q, mode: 'insensitive' } },
+      ]
+    }
+
     const orders = await prisma.workOrder.findMany({
       where,
       include:  orderInclude,
       orderBy: { createdAt: 'desc' },
+      // Pagination for performance — default 100 latest
+      take: req.query.limit ? parseInt(req.query.limit) : 100,
     })
     res.json(withId(orders))
   } catch (err) { res.status(500).json({ error: err.message }) }
@@ -157,6 +170,24 @@ router.get('/:id', async (req, res) => {
     })
     if (!order) return res.status(404).json({ error: 'Not found' })
     res.json(withId(order))
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
+// ─── DELETE /api/work-orders/:id — lab_manager only ─────────────────────────
+router.delete('/:id', roleGuard('lab_manager', 'super_admin'), auditLogger('order_deleted'), async (req, res) => {
+  try {
+    const order = await prisma.workOrder.findUnique({ where: { id: req.params.id } })
+    if (!order) return res.status(404).json({ error: 'Not found' })
+    // lab_manager can only delete orders from their own lab
+    if (req.user.role === 'lab_manager' && order.labId !== req.user.labId)
+      return res.status(403).json({ error: 'אין הרשאה למחוק עבודה זו' })
+
+    // Delete related notifications + messages first (cascade not configured)
+    await prisma.notification.deleteMany({ where: { workOrderId: req.params.id } })
+    await prisma.message.deleteMany({ where: { workOrderId: req.params.id } })
+    await prisma.workOrder.delete({ where: { id: req.params.id } })
+
+    res.json({ success: true, orderNumber: order.orderNumber })
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 

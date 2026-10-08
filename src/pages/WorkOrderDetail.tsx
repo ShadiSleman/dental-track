@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef } from 'react'
-import { getOrder, approveOrder, rejectOrder, updateStage, assignTechnician, uploadOrderFiles } from '../api/workOrders'
+import { getOrder, approveOrder, rejectOrder, updateStage, assignTechnician, uploadOrderFiles, deleteOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import ProgressTimeline from '../components/ProgressTimeline'
@@ -28,6 +28,7 @@ export default function WorkOrderDetail() {
   const [assigningTech, setAssigningTech] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -116,6 +117,20 @@ export default function WorkOrderDetail() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!order) return
+    if (!confirm(`למחוק את העבודה ${order._id ? order.orderNumber ?? '' : ''}?\n\nכל הנתונים יימחקו לצמיתות.`)) return
+    if (!confirm(`אישור סופי — למחוק לצמיתות את עבודה ${order.orderNumber ?? ''}?`)) return
+    setDeleting(true)
+    try {
+      await deleteOrder(order._id)
+      navigate('/dashboard')
+    } catch {
+      alert('שגיאה במחיקה — נסה שוב')
+      setDeleting(false)
+    }
+  }
+
   const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!order || !e.target.files || e.target.files.length === 0) return
     setUploadingFiles(true)
@@ -157,10 +172,20 @@ export default function WorkOrderDetail() {
               {[order.gender, order.birthDate ? `ת.לידה ${new Date(order.birthDate).toLocaleDateString('he-IL')}` : null, order.scanDate ? `סריקה ${new Date(order.scanDate).toLocaleDateString('he-IL')}` : null].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <div className="text-left">
-            {order.isDelayed && <span className="badge bg-red-100 text-red-700 mb-1 block">מאחר</span>}
+          <div className="text-left flex flex-col items-end gap-1">
+            {order.isDelayed && <span className="badge bg-red-100 text-red-700 block">מאחר</span>}
             {order.requiresDoctorApproval && (
               <span className="badge bg-yellow-100 text-yellow-700 block">ממתין לאישורך</span>
+            )}
+            {/* Delete button — lab_manager only */}
+            {user?.role === 'lab_manager' && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="mt-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded-lg px-2 py-1 transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                🗑️ מחק עבודה
+              </button>
             )}
           </div>
         </div>

@@ -24,6 +24,7 @@ const matchSearch = (o: WorkOrder, q: string) => {
     (o.firstName?.toLowerCase().includes(lq) ?? false) ||
     (o.lastName?.toLowerCase().includes(lq) ?? false) ||
     o.patientCode.toLowerCase().includes(lq) ||
+    o.orderNumber.toLowerCase().includes(lq) ||          // חיפוש לפי WO-2026-XXXX
     (o.birthDate ? new Date(o.birthDate).toLocaleDateString('he-IL').includes(lq) : false)
   )
 }

@@ -39,6 +39,9 @@ export const uploadOrderFiles = (id: string, data: FormData) =>
     timeout: 60000,
   }).then((r) => r.data)
 
+export const deleteOrder = (id: string) =>
+  api.delete<{ success: boolean; orderNumber: string }>(`/work-orders/${id}`).then((r) => r.data)
+
 export const saveSignature = (id: string, signature: string) =>
   api.patch<WorkOrder>(`/work-orders/${id}/signature`, { signature }).then((r) => r.data)
 
