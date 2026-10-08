@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'logo-192.png', 'logo-512.png', 'logo-192-maskable.png', 'logo-512-maskable.png', 'favicon.png'],
+      includeAssets: ['logo.png', 'logo-192.png', 'logo-512.png', 'logo-192-maskable.png', 'logo-512-maskable.png', 'favicon.png', 'favicon-32.png'],
       // Use the existing manifest.json instead of generating one
       manifest: {
         name: 'GAZI DENT — מעקב עבודות',
