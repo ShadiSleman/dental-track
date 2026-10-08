@@ -63,14 +63,18 @@ function ProfileButton() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
         aria-label="פרופיל"
       >
-        {/* Name + role — no avatar */}
-        <div className="text-right leading-tight">
+        {/* Mobile: small person icon only. Desktop: name + role */}
+        <div className="hidden sm:block text-right leading-tight">
           <p className="text-sm font-semibold text-gray-800 max-w-[110px] truncate">{user.name}</p>
           <p className="text-[10px] text-gray-400">{ROLE_LABELS[user.role] ?? user.role}</p>
         </div>
+        {/* Mobile only — person circle icon */}
+        <span className="sm:hidden flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold text-sm select-none">
+          {initials}
+        </span>
         <svg className="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
         </svg>
@@ -118,14 +122,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        {/* flex-row-reverse on mobile → bell+name on LEFT, logo on RIGHT (RTL-natural) */}
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex flex-row-reverse sm:flex-row items-center justify-between">
-          {/* Logo — appears RIGHT on mobile, LEFT on desktop */}
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="GAZI DENT" />
             <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide hidden sm:block">GAZI DENT</span>
           </div>
-          {/* Bell + Profile — appears LEFT on mobile, RIGHT on desktop */}
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
             <ProfileButton />
