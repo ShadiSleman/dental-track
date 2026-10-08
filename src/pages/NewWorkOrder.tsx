@@ -3,19 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/workOrders'
 import api from '../api/client'
 
-const HE_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
-const THIS_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 100 }, (_, i) => THIS_YEAR - i)
-const DAYS  = Array.from({ length: 31 }, (_, i) => i + 1)
-
-// Convert d/m/y parts to ISO string or ''
-const partsToISO = (d: string, m: string, y: string) => {
-  if (!d || !m || !y) return ''
-  const mm = String(Number(m)).padStart(2, '0')
-  const dd = String(Number(d)).padStart(2, '0')
-  return `${y}-${mm}-${dd}`
-}
-
 const calcAge = (iso: string): number | null => {
   if (!iso) return null
   const today = new Date(), birth = new Date(iso)
@@ -25,8 +12,7 @@ const calcAge = (iso: string): number | null => {
   return age >= 0 ? age : null
 }
 
-// Auto-format date as user types — inserts slashes automatically
-// Input: digits only → Output: dd/mm/yyyy
+// Auto-format: digits only → dd/mm/yyyy (slashes inserted automatically)
 const autoFormatDate = (raw: string): string => {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
   if (digits.length <= 2) return digits
@@ -43,45 +29,28 @@ const parseDateText = (text: string): string => {
   return isNaN(new Date(iso).getTime()) ? '' : iso
 }
 
-// Date field — dropdown selects + inline text input (always shown, no toggle)
-function DateSelect({ label, value, onChange, maxYear }: {
-  label: string; value: string; onChange: (iso: string) => void; maxYear?: number
-}) {
-  const [d, setD] = useState('')
-  const [m, setM] = useState('')
-  const [y, setY] = useState('')
-  const [typed, setTyped] = useState('')
+// ISO → dd/mm/yyyy display string
+const isoToDisplay = (iso: string): string => {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
 
-  const updSelects = (nd: string, nm: string, ny: string) => {
-    setD(nd); setM(nm); setY(ny)
-    const iso = partsToISO(nd, nm, ny)
-    onChange(iso)
-    // Keep text input in sync
-    if (iso) setTyped(`${nd.padStart(2,'0')}/${nm.padStart(2,'0')}/${ny}`)
-    else setTyped('')
-  }
+// Simple date input — text only, auto-slash, no dropdowns
+function DateSelect({ label, value, onChange }: {
+  label: string; value: string; onChange: (iso: string) => void
+}) {
+  const [typed, setTyped] = useState(() => isoToDisplay(value))
 
   const onTyped = (raw: string) => {
     const formatted = autoFormatDate(raw)
     setTyped(formatted)
-    const iso = parseDateText(formatted)
-    onChange(iso)
-    // Sync selects when full date is entered
-    if (iso) {
-      const [yr, mo, dy] = iso.split('-')
-      setD(String(parseInt(dy))); setM(String(parseInt(mo))); setY(yr)
-    }
+    onChange(parseDateText(formatted))
   }
 
-  const years = maxYear ? YEARS.filter(yr => yr <= maxYear) : YEARS
-  const selectCls = 'flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white cursor-pointer'
-  const displayDate = value ? new Date(value).toLocaleDateString('he-IL') : ''
-
   return (
-    <div className="space-y-2">
+    <div>
       <label className="label">{label}</label>
-
-      {/* Text input with auto-slash */}
       <input
         type="text"
         inputMode="numeric"
@@ -92,24 +61,6 @@ function DateSelect({ label, value, onChange, maxYear }: {
         dir="ltr"
         maxLength={10}
       />
-
-      {/* Dropdown selects — always visible as alternative */}
-      <div className="flex gap-2">
-        <select value={d} onChange={e => updSelects(e.target.value, m, y)} className={selectCls}>
-          <option value="">יום</option>
-          {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <select value={m} onChange={e => updSelects(d, e.target.value, y)} className={selectCls}>
-          <option value="">חודש</option>
-          {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
-        </select>
-        <select value={y} onChange={e => updSelects(d, m, e.target.value)} className={selectCls}>
-          <option value="">שנה</option>
-          {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
-        </select>
-      </div>
-
-      {value && <p className="text-xs text-emerald-600">✓ {displayDate}</p>}
     </div>
   )
 }
