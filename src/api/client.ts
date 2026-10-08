@@ -22,6 +22,16 @@ function getStoredToken(): string | null {
   }
 }
 
+// Decode JWT payload without verifying signature (just to check expiry)
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp && payload.exp < Date.now() / 1000
+  } catch {
+    return false // if we can't parse, assume it's valid
+  }
+}
+
 api.interceptors.request.use((config) => {
   const token = getStoredToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
@@ -31,17 +41,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (r) => r,
   (err) => {
-    // Only auto-redirect on 401 if:
-    // 1. We actually had a token (session expired — not a bad login attempt)
-    // 2. NOT on the /auth/login endpoint (that 401 = wrong password, show error instead)
     if (err.response?.status === 401) {
       const isLoginEndpoint = err.config?.url?.includes('/auth/login')
-      const hadToken = !!getStoredToken()
+      const token = getStoredToken()
 
-      if (!isLoginEndpoint && hadToken) {
-        // Session expired — clear auth and redirect
-        localStorage.removeItem('dt-auth')
-        window.location.href = '/login'
+      if (!isLoginEndpoint && token) {
+        // Only clear session if the token is genuinely expired/invalid
+        // (not a transient server/cold-start error)
+        if (isTokenExpired(token)) {
+          localStorage.removeItem('dt-auth')
+          window.location.href = '/login'
+        }
+        // If token looks valid but server returned 401 → transient error
+        // Don't log the user out — let the next request retry
       }
     }
     return Promise.reject(err)

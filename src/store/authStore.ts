@@ -20,7 +20,6 @@ export const useAuthStore = create<AuthStore>()(
       setAuth: (token, user) => set({ token, user }),
       logout: () => {
         set({ token: null, user: null })
-        // Clean up any legacy keys
         localStorage.removeItem('dt-auth')
         localStorage.removeItem('dt_token')
         localStorage.removeItem('dt-remember')
@@ -30,11 +29,24 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'dt-auth',
-      // Only persist token + user (not the hydration flag)
       partialize: (s) => ({ token: s.token, user: s.user }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true)
+      onRehydrateStorage: () => (state, error) => {
+        // Always mark hydrated — even if storage was empty or errored
+        if (state) {
+          state.setHasHydrated(true)
+        } else {
+          // state is null when storage is empty — manually set
+          useAuthStore.getState().setHasHydrated(true)
+        }
+        if (error) console.warn('[auth] rehydrate error:', error)
       },
     },
   ),
 )
+
+// Safety net: force hydration after 500ms in case onRehydrateStorage never fires
+setTimeout(() => {
+  if (!useAuthStore.getState()._hasHydrated) {
+    useAuthStore.getState().setHasHydrated(true)
+  }
+}, 500)

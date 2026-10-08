@@ -26,12 +26,6 @@ export default function LoginPage() {
     try {
       const { token, user } = await login(email, password)
       setAuth(token, user)
-      // If "remember me" not checked, clear storage when tab closes
-      if (!rememberMe) {
-        window.addEventListener('beforeunload', () => {
-          localStorage.removeItem('dt-auth')
-        }, { once: true })
-      }
       if (user.role === 'super_admin') navigate('/admin')
       else navigate('/dashboard')
     } catch {
