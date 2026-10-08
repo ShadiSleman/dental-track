@@ -16,8 +16,9 @@ export default function WorkOrderDetail() {
   const user = useAuthStore((s) => s.user)
   const { upsertOrder, orders } = useOrdersStore()
 
-  // Show cached order immediately (if available from dashboard list) — no spinner wait
+  // Show cached order immediately — skip spinner if we have data with stageHistory
   const cachedOrder = orders.find((o: WorkOrder) => o._id === id) ?? null
+  const hasFull = !!(cachedOrder && Array.isArray((cachedOrder as WorkOrder & { stageHistory?: unknown[] }).stageHistory))
   const [order, setOrder] = useState<WorkOrder | null>(cachedOrder)
   const [loading, setLoading] = useState(!cachedOrder) // skip spinner if we have cache
   const [rejectReason, setRejectReason] = useState('')
@@ -35,11 +36,17 @@ export default function WorkOrderDetail() {
 
   useEffect(() => {
     if (!id) return
-    // Always fetch fresh data in background (cache shown instantly above)
-    getOrder(id)
-      .then((o) => { setOrder(o); upsertOrder(o) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    // If we already have full order (with stageHistory) from cache → fetch silently in bg
+    // If we only have slim list-cache or nothing → fetch and show spinner
+    if (hasFull) {
+      // Background refresh — user sees content immediately
+      getOrder(id).then((o) => { setOrder(o); upsertOrder(o) }).catch(() => {})
+    } else {
+      getOrder(id)
+        .then((o) => { setOrder(o); upsertOrder(o) })
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }
   }, [id]) // eslint-disable-line
 
   // Fetch technicians for lab_manager assignment
