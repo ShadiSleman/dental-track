@@ -10,16 +10,18 @@ const api = axios.create({
   timeout: 25000,
 })
 
-// Read token from zustand's persist key (dt-auth → state.token)
+// Read token — localStorage first, cookie as fallback
 function getStoredToken(): string | null {
   try {
     const raw = localStorage.getItem('dt-auth')
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    return parsed?.state?.token ?? null
-  } catch {
-    return null
-  }
+    if (raw) {
+      const t = JSON.parse(raw)?.state?.token
+      if (t) return t
+    }
+  } catch {}
+  // Cookie fallback (survives Chrome localStorage clearing)
+  const m = document.cookie.match(/(?:^|; )dt-tok=([^;]*)/)
+  return m ? decodeURIComponent(m[1]) : null
 }
 
 // Decode JWT payload without verifying signature (just to check expiry)
