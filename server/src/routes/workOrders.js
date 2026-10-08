@@ -17,8 +17,8 @@ const orderInclude = {
   assignedTechnician: { select: { id: true, name: true, email: true } },
 }
 
-// Light include for LIST views — omits heavy JSON fields (stageHistory, files)
-// stageHistory and files are fetched only when opening a specific order
+// List select — includes stageHistory so detail pages load instantly from cache
+// files are still excluded (can be large — only loaded in detail view)
 const orderListSelect = {
   id: true,
   orderNumber: true,
@@ -40,6 +40,7 @@ const orderListSelect = {
   clinicId: true,
   assignedTechnicianId: true,
   notes: true,
+  stageHistory: true,   // ← included so detail page is instant from cache
   doctor:             { select: { id: true, name: true, email: true, role: true } },
   clinic:             { select: { id: true, name: true } },
   lab:                { select: { id: true, name: true } },

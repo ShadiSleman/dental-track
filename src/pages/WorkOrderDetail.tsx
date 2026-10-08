@@ -16,11 +16,13 @@ export default function WorkOrderDetail() {
   const user = useAuthStore((s) => s.user)
   const { upsertOrder, orders } = useOrdersStore()
 
-  // Show cached order immediately — skip spinner if we have data with stageHistory
+  // Show cached order immediately — list cache now includes stageHistory so this is usually full
   const cachedOrder = orders.find((o: WorkOrder) => o._id === id) ?? null
   const hasFull = !!(cachedOrder && Array.isArray((cachedOrder as WorkOrder & { stageHistory?: unknown[] }).stageHistory))
   const [order, setOrder] = useState<WorkOrder | null>(cachedOrder)
-  const [loading, setLoading] = useState(!cachedOrder) // skip spinner if we have cache
+  // Never show full-page skeleton — even without cache, show the shell and fetch in bg
+  const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(!hasFull) // subtle loading indicator
   const [rejectReason, setRejectReason] = useState('')
   const [showReject, setShowReject] = useState(false)
   const [activeTab, setActiveTab] = useState<'timeline' | 'files' | 'chat'>('timeline')
@@ -36,17 +38,12 @@ export default function WorkOrderDetail() {
 
   useEffect(() => {
     if (!id) return
-    // If we already have full order (with stageHistory) from cache → fetch silently in bg
-    // If we only have slim list-cache or nothing → fetch and show spinner
-    if (hasFull) {
-      // Background refresh — user sees content immediately
-      getOrder(id).then((o) => { setOrder(o); upsertOrder(o) }).catch(() => {})
-    } else {
-      getOrder(id)
-        .then((o) => { setOrder(o); upsertOrder(o) })
-        .catch(() => {})
-        .finally(() => setLoading(false))
-    }
+    // Always fetch fresh data — either silently (hasFull) or with refresh indicator
+    setRefreshing(!hasFull)
+    getOrder(id)
+      .then((o) => { setOrder(o); upsertOrder(o) })
+      .catch(() => {})
+      .finally(() => setRefreshing(false))
   }, [id]) // eslint-disable-line
 
   // Fetch technicians for lab_manager assignment
@@ -56,7 +53,8 @@ export default function WorkOrderDetail() {
       .catch(() => {})
   }, [user])
 
-  if (loading) {
+  // Only show full-page skeleton when there's truly nothing to display
+  if (!order && refreshing) {
     return (
       <div className="space-y-3 p-4">
         <div className="card animate-pulse h-32 bg-gray-100" />
@@ -417,7 +415,18 @@ export default function WorkOrderDetail() {
 
       {activeTab === 'timeline' && (
         <div className="card">
-          <ProgressTimeline currentStage={order.currentStage} history={order.stageHistory} />
+          {refreshing && !order.stageHistory ? (
+            <div className="space-y-3 animate-pulse">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" />
+                  <div className="h-4 bg-gray-200 rounded flex-1" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ProgressTimeline currentStage={order.currentStage} history={order.stageHistory || []} />
+          )}
         </div>
       )}
 
