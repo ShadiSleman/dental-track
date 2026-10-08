@@ -118,11 +118,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
+        {/* flex-row-reverse on mobile → bell+name on LEFT, logo on RIGHT (RTL-natural) */}
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex flex-row-reverse sm:flex-row items-center justify-between">
+          {/* Logo — appears RIGHT on mobile, LEFT on desktop */}
           <div className="flex items-center gap-2">
             <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="GAZI DENT" />
             <span className="font-extrabold text-[#1a3a6b] text-lg tracking-wide hidden sm:block">GAZI DENT</span>
           </div>
+          {/* Bell + Profile — appears LEFT on mobile, RIGHT on desktop */}
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
             <ProfileButton />
