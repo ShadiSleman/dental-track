@@ -25,35 +25,52 @@ const calcAge = (iso: string): number | null => {
   return age >= 0 ? age : null
 }
 
-// Parse dd/mm/yyyy or dd.mm.yyyy typed text → ISO
-const textToISO = (text: string): string => {
-  const clean = text.replace(/\./g, '/')
-  const parts = clean.split('/')
+// Auto-format date as user types — inserts slashes automatically
+// Input: digits only → Output: dd/mm/yyyy
+const autoFormatDate = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0,2)}/${digits.slice(2)}`
+  return `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`
+}
+
+const parseDateText = (text: string): string => {
+  const parts = text.split('/')
   if (parts.length !== 3) return ''
   const [dd, mm, yyyy] = parts
-  if (!dd || !mm || !yyyy || yyyy.length < 4) return ''
+  if (yyyy.length < 4) return ''
   const iso = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`
   return isNaN(new Date(iso).getTime()) ? '' : iso
 }
 
-// Date select + manual input
+// Date field — dropdown selects + inline text input (always shown, no toggle)
 function DateSelect({ label, value, onChange, maxYear }: {
   label: string; value: string; onChange: (iso: string) => void; maxYear?: number
 }) {
   const [d, setD] = useState('')
   const [m, setM] = useState('')
   const [y, setY] = useState('')
-  const [manual, setManual] = useState(false)
-  const [typed, setTyped]   = useState('')
+  const [typed, setTyped] = useState('')
 
   const updSelects = (nd: string, nm: string, ny: string) => {
     setD(nd); setM(nm); setY(ny)
-    onChange(partsToISO(nd, nm, ny))
+    const iso = partsToISO(nd, nm, ny)
+    onChange(iso)
+    // Keep text input in sync
+    if (iso) setTyped(`${nd.padStart(2,'0')}/${nm.padStart(2,'0')}/${ny}`)
+    else setTyped('')
   }
 
-  const onTyped = (val: string) => {
-    setTyped(val)
-    onChange(textToISO(val))
+  const onTyped = (raw: string) => {
+    const formatted = autoFormatDate(raw)
+    setTyped(formatted)
+    const iso = parseDateText(formatted)
+    onChange(iso)
+    // Sync selects when full date is entered
+    if (iso) {
+      const [yr, mo, dy] = iso.split('-')
+      setD(String(parseInt(dy))); setM(String(parseInt(mo))); setY(yr)
+    }
   }
 
   const years = maxYear ? YEARS.filter(yr => yr <= maxYear) : YEARS
@@ -61,51 +78,38 @@ function DateSelect({ label, value, onChange, maxYear }: {
   const displayDate = value ? new Date(value).toLocaleDateString('he-IL') : ''
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <label className="label mb-0">{label}</label>
-        <button
-          type="button"
-          onClick={() => { setManual(v => !v); onChange(''); setTyped(''); setD(''); setM(''); setY('') }}
-          className="text-xs text-primary-500 hover:text-primary-700 underline"
-        >
-          {manual ? 'בחר מרשימה' : 'הקלדה ידנית'}
-        </button>
+    <div className="space-y-2">
+      <label className="label">{label}</label>
+
+      {/* Text input with auto-slash */}
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="DD/MM/YYYY"
+        value={typed}
+        onChange={e => onTyped(e.target.value)}
+        className="input text-left tracking-widest"
+        dir="ltr"
+        maxLength={10}
+      />
+
+      {/* Dropdown selects — always visible as alternative */}
+      <div className="flex gap-2">
+        <select value={d} onChange={e => updSelects(e.target.value, m, y)} className={selectCls}>
+          <option value="">יום</option>
+          {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <select value={m} onChange={e => updSelects(d, e.target.value, y)} className={selectCls}>
+          <option value="">חודש</option>
+          {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
+        </select>
+        <select value={y} onChange={e => updSelects(d, m, e.target.value)} className={selectCls}>
+          <option value="">שנה</option>
+          {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
+        </select>
       </div>
 
-      {manual ? (
-        <div>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="dd/mm/yyyy"
-            value={typed}
-            onChange={e => onTyped(e.target.value)}
-            className="input text-left"
-            dir="ltr"
-            maxLength={10}
-          />
-          {value && <p className="text-xs text-emerald-600 mt-1">✓ {displayDate}</p>}
-        </div>
-      ) : (
-        <div>
-          <div className="flex gap-2">
-            <select value={d} onChange={e => updSelects(e.target.value, m, y)} className={selectCls}>
-              <option value="">יום</option>
-              {DAYS.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <select value={m} onChange={e => updSelects(d, e.target.value, y)} className={selectCls}>
-              <option value="">חודש</option>
-              {HE_MONTHS.map((name, i) => <option key={i+1} value={i+1}>{name}</option>)}
-            </select>
-            <select value={y} onChange={e => updSelects(d, m, e.target.value)} className={selectCls}>
-              <option value="">שנה</option>
-              {years.map(yr => <option key={yr} value={yr}>{yr}</option>)}
-            </select>
-          </div>
-          {value && <p className="text-xs text-emerald-600 mt-1">✓ {displayDate}</p>}
-        </div>
-      )}
+      {value && <p className="text-xs text-emerald-600">✓ {displayDate}</p>}
     </div>
   )
 }
@@ -214,7 +218,6 @@ export default function NewWorkOrder() {
               {[
                 { val: 'זכר',  label: 'זכר ♂',  active: 'bg-[#1a3a6b] text-white' },
                 { val: 'נקבה', label: 'נקבה ♀', active: 'bg-[#d946ef] text-white'  },
-                { val: '',     label: 'לא ידוע',  active: 'bg-gray-400 text-white'   },
               ].map(({ val, label, active }) => (
                 <button
                   key={label}
