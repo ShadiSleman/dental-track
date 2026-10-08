@@ -80,12 +80,19 @@ router.patch('/:id', async (req, res) => {
     if (!['technician', 'doctor'].includes(existing.role))
       return res.status(403).json({ error: 'ניתן לערוך רק טכנאים ורופאים' })
 
-    const { name, phone, isActive, password } = req.body
+    const { name, email, phone, isActive, password } = req.body
     const data = {}
     if (name     !== undefined) data.name     = name
     if (phone    !== undefined) data.phone    = phone
     if (isActive !== undefined) data.isActive = isActive
     if (password)               data.passwordHash = await bcrypt.hash(password, 10)
+    if (email) {
+      // Check email not taken by another user
+      const taken = await prisma.user.findUnique({ where: { email } })
+      if (taken && taken.id !== req.params.id)
+        return res.status(400).json({ error: 'אימייל זה כבר בשימוש' })
+      data.email = email
+    }
 
     const user = await prisma.user.update({
       where: { id: req.params.id },

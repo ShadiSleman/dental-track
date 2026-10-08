@@ -145,12 +145,10 @@ export default function TeamManagement() {
                 <input className="input" value={form.name} onChange={set('name')} placeholder="ישראל ישראלי" />
               </div>
 
-              {!editing && (
-                <div>
-                  <label className="label">אימייל *</label>
-                  <input className="input" type="email" value={form.email} onChange={set('email')} placeholder="email@example.com" />
-                </div>
-              )}
+              <div>
+                <label className="label">אימייל *</label>
+                <input className="input" type="email" value={form.email} onChange={set('email')} placeholder="email@example.com" dir="ltr" />
+              </div>
 
               <div>
                 <label className="label">{editing ? 'סיסמה חדשה (השאר ריק לאי שינוי)' : 'סיסמה *'}</label>
