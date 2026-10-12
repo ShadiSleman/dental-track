@@ -21,10 +21,11 @@ const matchSearch = (o: WorkOrder, q: string) => {
   if (!q) return true
   const lq = q.toLowerCase()
   return (
-    (o.firstName?.toLowerCase().includes(lq) ?? false) ||
-    (o.lastName?.toLowerCase().includes(lq) ?? false) ||
-    o.patientCode.toLowerCase().includes(lq) ||
-    o.orderNumber.toLowerCase().includes(lq) ||          // חיפוש לפי WO-2026-XXXX
+    (o.firstName?.toLowerCase().includes(lq)      ?? false) ||
+    (o.lastName?.toLowerCase().includes(lq)       ?? false) ||
+    o.patientCode.toLowerCase().includes(lq)                ||
+    o.orderNumber.toLowerCase().includes(lq)                ||
+    (o.doctor?.name?.toLowerCase().includes(lq)   ?? false) ||   // חיפוש לפי שם רופא
     (o.birthDate ? new Date(o.birthDate).toLocaleDateString('he-IL').includes(lq) : false)
   )
 }
@@ -55,8 +56,9 @@ export default function LabDashboard() {
   const [filter, setFilter]         = useState<FilterKey>('all')
   const [search, setSearch]         = useState('')
   const [page, setPage]             = useState(1)
-  const [groupMode, setGroupMode]   = useState(true)          // true = group by doctor
-  const [collapsed, setCollapsed]   = useState<Set<string>>(new Set()) // collapsed doctor names
+  const [groupMode, setGroupMode]   = useState(true)
+  const [collapsed, setCollapsed]   = useState<Set<string>>(new Set())
+  const [doctorFilter, setDoctorFilter] = useState('')          // '' = all doctors
 
   useEffect(() => {
     setLoading(true)
@@ -80,8 +82,13 @@ export default function LabDashboard() {
       .finally(() => setLoading(false))
   }, [setOrders, setLoading, upsertOrder])
 
-  // Reset page on filter/search/groupMode change
-  useEffect(() => { setPage(1) }, [filter, search, groupMode])
+  // Reset page on filter/search/groupMode/doctor change
+  useEffect(() => { setPage(1) }, [filter, search, groupMode, doctorFilter])
+
+  // Unique doctor list from loaded orders
+  const doctorOptions = Array.from(
+    new Map(orders.map(o => [o.doctor?._id, o.doctor?.name ?? 'לא ידוע'])).entries()
+  ).sort((a, b) => (a[1] ?? '').localeCompare(b[1] ?? '', 'he'))
 
   const toggleCollapse = (name: string) =>
     setCollapsed(prev => {
@@ -102,7 +109,8 @@ export default function LabDashboard() {
       filter === 'delayed'          ? o.isDelayed :
       filter === 'shipping'         ? o.currentStage === 'with_courier' :
       /* done */                      o.currentStage === 'delivered'
-    return matchFilter && matchSearch(o, search)
+    const matchDoctor = !doctorFilter || o.doctor?._id === doctorFilter
+    return matchFilter && matchSearch(o, search) && matchDoctor
   })
 
   const newOrders       = orders.filter((o: WorkOrder) => o.currentStage === 'scan_received').length
@@ -157,16 +165,70 @@ export default function LabDashboard() {
         <KpiCard count={delayed}         label="מאחרות"         filterKey="delayed"          icon="🚨" colorClass="bg-red-50 border-red-200"       numColor="text-red-500" />
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-        <input
-          className="input pr-9"
-          placeholder="חיפוש לפי שם פרטי, שם משפחה, תאריך לידה..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      {/* Search + Doctor filter */}
+      <div className="flex gap-2">
+        {/* Text search */}
+        <div className="relative flex-1">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input
+            className="input pr-9 w-full"
+            placeholder="חיפוש לפי מטופל, רופא, מספר עבודה..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+            >✕</button>
+          )}
+        </div>
+
+        {/* Doctor dropdown */}
+        <div className="relative flex-shrink-0">
+          <select
+            value={doctorFilter}
+            onChange={e => setDoctorFilter(e.target.value)}
+            className={`input appearance-none pl-8 pr-3 cursor-pointer min-w-[130px] ${
+              doctorFilter ? 'border-[#1a3a6b] bg-blue-50 text-[#1a3a6b] font-medium' : ''
+            }`}
+          >
+            <option value="">👨‍⚕️ כל הרופאים</option>
+            {doctorOptions.map(([id, name]) => (
+              <option key={id} value={id ?? ''}>{name}</option>
+            ))}
+          </select>
+          {doctorFilter && (
+            <button
+              onClick={() => setDoctorFilter('')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-[#1a3a6b] hover:text-gray-600 text-xs font-bold"
+            >✕</button>
+          )}
+        </div>
       </div>
+
+      {/* Active filters summary */}
+      {(search || doctorFilter) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">{filtered.length} תוצאות</span>
+          {search && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+              🔍 "{search}"
+              <button onClick={() => setSearch('')} className="hover:text-blue-900">✕</button>
+            </span>
+          )}
+          {doctorFilter && (
+            <span className="flex items-center gap-1 text-xs bg-[#1a3a6b]/10 text-[#1a3a6b] border border-[#1a3a6b]/20 px-2 py-0.5 rounded-full">
+              👨‍⚕️ {doctorOptions.find(([id]) => id === doctorFilter)?.[1]}
+              <button onClick={() => setDoctorFilter('')} className="hover:text-blue-900">✕</button>
+            </span>
+          )}
+          <button
+            onClick={() => { setSearch(''); setDoctorFilter('') }}
+            className="text-xs text-gray-400 underline underline-offset-2 hover:text-gray-600"
+          >נקה הכל</button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1">
