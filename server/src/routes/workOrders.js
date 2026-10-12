@@ -230,11 +230,17 @@ router.delete('/:id', roleGuard('lab_manager', 'super_admin'), auditLogger('orde
 // ─── POST /api/work-orders ────────────────────────────────────────────────────
 router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_created'), async (req, res) => {
   try {
-    const { firstName, lastName, gender, birthDate, scanDate, notes } = req.body
+    const { firstName, lastName, gender, birthDate, scanDate, notes, labId: bodyLabId } = req.body
     const doctor = req.user
+    const labId = bodyLabId || doctor.labId
 
-    if (!doctor.clinicId || !doctor.labId)
-      return res.status(400).json({ error: 'Doctor must be associated with a clinic and lab' })
+    if (!doctor.clinicId)
+      return res.status(400).json({ error: 'Doctor must be associated with a clinic' })
+    if (!labId)
+      return res.status(400).json({ error: 'יש לבחור מעבדה' })
+    const selectedLab = await prisma.lab.findUnique({ where: { id: labId }, select: { id: true, isActive: true } })
+    if (!selectedLab || !selectedLab.isActive)
+      return res.status(400).json({ error: 'מעבדה לא נמצאה' })
 
     if (!firstName || !lastName)
       return res.status(400).json({ error: 'יש למלא שם פרטי ושם משפחה' })
@@ -274,7 +280,7 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
         notes,
         doctorId: doctor.id,
         clinicId: doctor.clinicId,
-        labId:    doctor.labId,
+        labId:    labId,
         currentStage: 'scan_received',
         stageHistory,
         files,
@@ -291,7 +297,7 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
 
     // Notify all lab_managers of this lab
     const labManagers = await prisma.user.findMany({
-      where: { labId: doctor.labId, role: 'lab_manager', isActive: true },
+      where: { labId: labId, role: 'lab_manager', isActive: true },
       select: { id: true },
     })
     labManagers.forEach(m =>

@@ -30,6 +30,7 @@ app.use('/api/messages',      require('./routes/messages'))
 app.use('/api/notifications', require('./routes/notifications'))
 app.use('/api/admin',         require('./routes/admin'))
 app.use('/api/team',          require('./routes/team'))
+app.use('/api/labs',          require('./routes/labs'))
 
 app.get('/api/health', (req, res) =>
   res.json({

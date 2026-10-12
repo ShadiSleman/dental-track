@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/workOrders'
 import api from '../api/client'
+import LabLogo from '../components/LabLogo'
+import type { Lab } from '../types'
 
 const calcAge = (iso: string): number | null => {
   if (!iso) return null
@@ -69,6 +71,10 @@ export default function NewWorkOrder() {
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const [selectedLab, setSelectedLab] = useState<Lab | null>(null)
+  const [labs, setLabs] = useState<Lab[]>([])
+  const [labsLoading, setLabsLoading] = useState(false)
+
   const [form, setForm] = useState({
     firstName: '',
     lastName:  '',
@@ -89,12 +95,22 @@ export default function NewWorkOrder() {
     api.get<{ r2: boolean }>('/health').then(r => setR2Ready(r.data.r2)).catch(() => setR2Ready(false))
   }, [])
 
+  useEffect(() => {
+    setLabsLoading(true)
+    import('../api/labs').then(m => m.getLabs()).then(setLabs).finally(() => setLabsLoading(false))
+  }, [])
+
   const age = calcAge(form.birthDate)
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!selectedLab) {
+      setError('יש לבחור מעבדה')
+      return
+    }
 
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setError('יש למלא שם פרטי ושם משפחה')
@@ -114,6 +130,7 @@ export default function NewWorkOrder() {
       fd.append('birthDate', form.birthDate)
       fd.append('scanDate',  form.scanDate)
       fd.append('notes',     form.notes)
+      fd.append('labId',     selectedLab._id)
       files.forEach(f => fd.append('files', f))
 
       const order = await createOrder(fd)
@@ -132,9 +149,55 @@ export default function NewWorkOrder() {
 
   return (
     <div className="max-w-lg mx-auto pb-20 md:pb-4">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">עבודה חדשה</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">עבודה חדשה</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Lab selection screen */}
+      {!selectedLab ? (
+        <>
+          <p className="text-sm text-gray-500 mb-4">בחר מעבדה לשליחת העבודה:</p>
+          {labsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {labs.map(lab => (
+                <button
+                  key={lab._id}
+                  type="button"
+                  onClick={() => setSelectedLab(lab)}
+                  className="w-full card flex items-center gap-4 hover:shadow-md hover:border-primary-300 transition-all cursor-pointer text-right"
+                >
+                  <LabLogo lab={lab} size="lg" />
+                  <div>
+                    <p className="font-bold text-gray-900 text-lg">{lab.name}</p>
+                    {lab.address && <p className="text-sm text-gray-400">{lab.address}</p>}
+                  </div>
+                  <div className="mr-auto text-gray-300 text-2xl">‹</div>
+                </button>
+              ))}
+              {labs.length === 0 && !labsLoading && (
+                <p className="text-center text-gray-400 py-8">לא נמצאו מעבדות פעילות</p>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Selected lab header */}
+          <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+            <LabLogo lab={selectedLab} size="sm" />
+            <span className="font-semibold text-gray-800">{selectedLab.name}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedLab(null)}
+              className="mr-auto text-xs text-primary-500 hover:text-primary-700 underline"
+            >
+              שנה מעבדה
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Patient details */}
         <div className="card space-y-4">
@@ -266,6 +329,8 @@ export default function NewWorkOrder() {
           {loading ? 'שולח...' : '📤 שלח למעבדה'}
         </button>
       </form>
+        </>
+      )}
     </div>
   )
 }

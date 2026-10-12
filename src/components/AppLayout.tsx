@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import NotificationBell from './NotificationBell'
 import { useOnClickOutside } from '../hooks/useOnClickOutside'
+import LabLogo from './LabLogo'
 
 const NAV_ITEMS = {
   doctor: [
@@ -115,6 +116,13 @@ function ProfileButton() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore()
   const location = useLocation()
+  const [currentLab, setCurrentLab] = useState<{ name: string; logoUrl?: string | null; _id?: string } | null>(null)
+
+  useEffect(() => {
+    if (user?.role === 'lab_manager' && user.labId) {
+      import('../api/labs').then(m => m.getMyLab()).then(setCurrentLab).catch(() => {})
+    }
+  }, [user?.role, user?.labId])
 
   const items = user ? (NAV_ITEMS[user.role] ?? []) : []
 
@@ -124,8 +132,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="GAZI DENT" />
-            <span className="font-extrabold text-[#1a3a6b] text-base sm:text-lg tracking-wide">GAZI DENT</span>
+            {user?.role === 'lab_manager' && currentLab ? (
+              <>
+                <LabLogo lab={currentLab} size="sm" />
+                <span className="font-extrabold text-[#1a3a6b] text-base sm:text-lg tracking-wide">{currentLab.name}</span>
+              </>
+            ) : (
+              <>
+                <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="DentalTrack" />
+                <span className="font-extrabold text-[#1a3a6b] text-base sm:text-lg tracking-wide">DentalTrack</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
