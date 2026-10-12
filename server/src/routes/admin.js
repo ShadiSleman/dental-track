@@ -341,16 +341,28 @@ router.get('/subscriptions', async (req, res) => {
     const { page = 1, limit = 20, status } = req.query
     const where = {}
     if (status) where.status = status
-    const [subscriptions, total] = await Promise.all([
+    const [rawSubs, total] = await Promise.all([
       prisma.subscription.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip:    (Number(page) - 1) * Number(limit),
         take:    Number(limit),
+        include: { lab: { select: { id: true, name: true } } },
       }),
       prisma.subscription.count({ where }),
     ])
-    res.json({ subscriptions: withId(subscriptions), total })
+
+    const VAT = 0.18
+    const subscriptions = rawSubs.map(s => ({
+      ...withId(s),
+      labName:       s.lab?.name ?? '—',
+      renewsAt:      s.validUntil,      // alias for frontend
+      startedAt:     s.createdAt,
+      priceExVat:    s.price,
+      priceIncVat:   Math.round(s.price * (1 + VAT)),
+    }))
+
+    res.json({ subscriptions, total })
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 

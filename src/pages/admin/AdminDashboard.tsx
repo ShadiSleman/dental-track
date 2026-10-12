@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { getAdminStats } from '../../api/admin'
 
@@ -15,15 +16,19 @@ interface Stats {
   topLabs: { name: string; orders: number }[]
 }
 
-const KPI = ({ label, value, sub, color = 'text-white' }: {
-  label: string; value: string | number; sub?: string; color?: string
-}) => (
-  <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-    <p className="text-xs text-gray-400 mb-1">{label}</p>
-    <p className={`text-2xl font-bold ${color}`}>{value}</p>
-    {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
-  </div>
-)
+const KPI = ({ label, value, sub, color = 'text-white', to }: {
+  label: string; value: string | number; sub?: string; color?: string; to?: string
+}) => {
+  const inner = (
+    <div className={`bg-gray-900 rounded-xl p-4 border border-gray-800 h-full transition-colors ${to ? 'hover:border-blue-600 hover:bg-gray-800 cursor-pointer' : ''}`}>
+      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
+      {to && <p className="text-[10px] text-blue-500 mt-2">לחץ לפרטים ←</p>}
+    </div>
+  )
+  return to ? <Link to={to}>{inner}</Link> : inner
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -54,17 +59,30 @@ export default function AdminDashboard() {
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPI label="משתמשים פעילים" value={stats.totalUsers} color="text-blue-400" />
-        <KPI label="מעבדות" value={stats.totalLabs} color="text-purple-400" />
-        <KPI label="מרפאות" value={stats.totalClinics} color="text-teal-400" />
-        <KPI label="MRR" value={`${stats.mrr.toLocaleString('he-IL')} ₪`} color="text-emerald-400" sub="הכנסה חודשית" />
-        <KPI label="עבודות סה&quot;כ" value={stats.totalOrders} />
-        <KPI label="עבודות פתוחות" value={stats.openOrders} color="text-yellow-400" />
-        <KPI
-          label="עבודות מאחרות"
-          value={stats.delayedOrders}
-          color={stats.delayedOrders > 0 ? 'text-red-400' : 'text-gray-400'}
-        />
+        <KPI label="משתמשים"       value={stats.totalUsers}   color="text-blue-400"   to="/admin/users" />
+        <KPI label="מעבדות"        value={stats.totalLabs}    color="text-purple-400" to="/admin/labs" />
+        <KPI label="מרפאות"        value={stats.totalClinics} color="text-teal-400" />
+        <KPI label="מנויים פעילים" value={`${stats.mrr.toLocaleString('he-IL')} ₪`} color="text-emerald-400" sub="הכנסה חודשית" to="/admin/subscriptions" />
+        <KPI label="עבודות סה״כ"   value={stats.totalOrders}  />
+        <KPI label="עבודות פתוחות" value={stats.openOrders}   color="text-yellow-400" />
+        <KPI label="עבודות מאחרות" value={stats.delayedOrders} color={stats.delayedOrders > 0 ? 'text-red-400' : 'text-gray-400'} />
+        <KPI label="לוגים"          value="צפה ←" color="text-gray-400" to="/admin/logs" />
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-3">
+        <Link to="/admin/labs"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-colors">
+          🏭 מעבדה חדשה
+        </Link>
+        <Link to="/admin/users"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-medium border border-gray-700 transition-colors">
+          👥 ניהול משתמשים
+        </Link>
+        <Link to="/admin/subscriptions"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-medium border border-gray-700 transition-colors">
+          💳 מנויים ותשלומים
+        </Link>
       </div>
 
       {/* Charts row */}
