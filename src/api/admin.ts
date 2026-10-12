@@ -10,6 +10,12 @@ export const getAdminStats = () =>
     openOrders: number
     delayedOrders: number
     mrr: number
+    billing?: {
+      lifetimeCount: number
+      monthlyCount: number
+      lifetimeLabs: { _id: string; name: string; plan: string | null; price: number; validUntil: string | null }[]
+      monthlyLabs: { _id: string; name: string; plan: string | null; price: number; validUntil: string | null }[]
+    }
     recentSignups: User[]
     ordersByMonth: { month: string; count: number }[]
     topLabs: { name: string; orders: number }[]
@@ -111,6 +117,7 @@ export interface AdminLabEntry {
   technicianCount: number
   doctorCount: number
   openOrders: number
+  billingPhase?: 'lifetime' | 'monthly' | 'none'
   subscription: AdminSubscriptionRecord | null
   createdAt: string
 }

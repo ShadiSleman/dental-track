@@ -6,6 +6,7 @@ import {
   type AdminLabEntry, type AdminLabDetail, type CreateLabPayload, type AddTeamMemberPayload, type PriceCatalog,
 } from '../../api/admin'
 import type { User } from '../../types'
+import { PriceFields } from './AdminPricing'
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 const FALLBACK_PRICES: PriceCatalog = { lifetimePrice: 19000, starterPrice: 290, standardPrice: 590, proPrice: 990 }
@@ -51,14 +52,15 @@ function planBadge(plan: string) {
 }
 
 function subStatus(sub: AdminLabEntry['subscription']) {
-  if (!sub) return { label: 'אין מנוי', color: 'text-gray-500' }
-  if (sub.status !== 'active') return { label: 'לא פעיל', color: 'text-red-400' }
+  if (!sub?.validUntil) return { label: 'אין מנוי', color: 'text-gray-500', date: '' }
   const until = new Date(sub.validUntil)
-  const now   = new Date()
-  const days  = Math.ceil((until.getTime() - now.getTime()) / 86400000)
-  if (days < 0)  return { label: 'פג תוקף', color: 'text-red-400' }
-  if (days < 60) return { label: `פג בעוד ${days} ימים`, color: 'text-yellow-400' }
-  return { label: `תקף עד ${until.toLocaleDateString('he-IL')}`, color: 'text-emerald-400' }
+  const date  = until.toLocaleDateString('he-IL')
+  const days  = Math.ceil((until.getTime() - Date.now()) / 86400000)
+  if (sub.status === 'expired' || days < 0)
+    return { label: `הסתיים ב-${date}`, color: 'text-orange-300', date }
+  if (days < 60)
+    return { label: `${days} ימים נותרו · עד ${date}`, color: 'text-yellow-400', date }
+  return { label: `${days} ימים נותרו · עד ${date}`, color: 'text-emerald-400', date }
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ export default function AdminLabs() {
   const [labs, setLabs]           = useState<AdminLabEntry[]>([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
+  const [phase, setPhase]         = useState<'all' | 'lifetime' | 'monthly'>('all')
   const [selectedId, setSelected] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
@@ -76,11 +79,15 @@ export default function AdminLabs() {
 
   useEffect(load, [])
 
-  const filtered = labs.filter(l =>
-    !search ||
-    l.name.toLowerCase().includes(search.toLowerCase()) ||
-    (l.email ?? '').toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = labs.filter(l => {
+    const q = !search ||
+      l.name.toLowerCase().includes(search.toLowerCase()) ||
+      (l.email ?? '').toLowerCase().includes(search.toLowerCase())
+    const p = phase === 'all' || l.billingPhase === phase
+    return q && p
+  })
+  const lifetimeN = labs.filter(l => l.billingPhase === 'lifetime').length
+  const monthlyN  = labs.filter(l => l.billingPhase === 'monthly').length
 
   return (
     <div className="space-y-5">
@@ -96,6 +103,28 @@ export default function AdminLabs() {
         >
           ＋ מעבדה חדשה
         </button>
+      </div>
+
+      {/* Classify: still inside 3 years vs paying monthly */}
+      <div className="flex gap-2 flex-wrap">
+        {([
+          ['all', `הכל (${labs.length})`],
+          ['lifetime', `בתוך 3 שנים (${lifetimeN})`],
+          ['monthly', `חודשי אחרי 3 שנים (${monthlyN})`],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setPhase(key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              phase === key ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >{label}</button>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-white mb-2">מחירון — המספרים ניתנים לעריכה</h2>
+        <PriceFields />
       </div>
 
       {/* Search */}
@@ -187,7 +216,15 @@ function LabCard({ lab, onSelect, onDelete }: { lab: AdminLabEntry; onSelect: ()
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-1">
             <h3 className="font-bold text-white truncate">{lab.name}</h3>
-            {!lab.isActive && <span className="text-xs bg-red-900/50 text-red-400 px-1.5 rounded-full flex-shrink-0">מושבת</span>}
+            <div className="flex gap-1 flex-shrink-0">
+              {lab.billingPhase === 'monthly' && (
+                <span className="text-[10px] bg-emerald-900/50 text-emerald-300 px-1.5 py-0.5 rounded-full">חודשי</span>
+              )}
+              {lab.billingPhase === 'lifetime' && (
+                <span className="text-[10px] bg-blue-900/50 text-blue-300 px-1.5 py-0.5 rounded-full">3 שנים</span>
+              )}
+              {!lab.isActive && <span className="text-xs bg-red-900/50 text-red-400 px-1.5 rounded-full">מושבת</span>}
+            </div>
           </div>
           {lab.email && <p className="text-xs text-gray-400 truncate" dir="ltr">{lab.email}</p>}
           {lab.phone && <p className="text-xs text-gray-500">{lab.phone}</p>}

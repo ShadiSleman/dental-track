@@ -56,7 +56,13 @@ router.get('/stats', async (req, res) => {
       })
     )
 
-    res.json({ totalUsers, totalLabs, totalClinics, totalOrders, openOrders, delayedOrders, mrr, recentSignups: withId(recentSignups), ordersByMonth: months, topLabs })
+    const [allLabs, allSubs] = await Promise.all([
+      prisma.lab.findMany({ select: { id: true, name: true } }),
+      prisma.subscription.findMany({ orderBy: { createdAt: 'desc' } }),
+    ])
+    const billing = summarizeBilling(allLabs, allSubs)
+
+    res.json({ totalUsers, totalLabs, totalClinics, totalOrders, openOrders, delayedOrders, mrr, recentSignups: withId(recentSignups), ordersByMonth: months, topLabs, billing })
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
@@ -122,6 +128,7 @@ router.post('/users/:id/reset-password', async (req, res) => {
 router.get('/labs', async (req, res) => {
   try {
     const labs = await prisma.lab.findMany({ orderBy: { createdAt: 'desc' } })
+    const allSubs = await prisma.subscription.findMany({ orderBy: { createdAt: 'desc' } })
     const result = await Promise.all(
       labs.map(async (lab) => {
         const [technicianCount, doctorCount, openOrders] = await Promise.all([
@@ -129,11 +136,15 @@ router.get('/labs', async (req, res) => {
           prisma.labMember.count({ where: { labId: lab.id, user: { role: 'doctor' } } }),
           prisma.workOrder.count({ where: { labId: lab.id, currentStage: { not: 'delivered' } } }),
         ])
-        const sub = await prisma.subscription.findFirst({
-          where: { labId: lab.id },
-          orderBy: { createdAt: 'desc' }
-        })
-        return { ...withId(lab), technicianCount, doctorCount, openOrders, subscription: sub ? withId(sub) : null }
+        const classified = classifyLab(allSubs.filter(s => s.labId === lab.id))
+        return {
+          ...withId(lab),
+          technicianCount,
+          doctorCount,
+          openOrders,
+          billingPhase: classified.billingPhase,
+          subscription: classified.current ? withId(classified.current) : null,
+        }
       })
     )
     res.json(result)
@@ -337,6 +348,39 @@ router.post('/labs/:id/subscriptions', async (req, res) => {
     res.status(201).json(withId(sub))
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
+
+const MONTHLY_PLANS = new Set(['lab_starter', 'lab_standard', 'lab_pro', 'lab_basic'])
+
+function classifyLab(subs) {
+  const activeMonthly = subs.find(s => s.status === 'active' && MONTHLY_PLANS.has(s.plan))
+  const activeLife    = subs.find(s => s.status === 'active' && s.plan === 'lab_lifetime_3y')
+  if (activeMonthly) return { billingPhase: 'monthly', current: activeMonthly }
+  if (activeLife)    return { billingPhase: 'lifetime', current: activeLife }
+  return { billingPhase: 'none', current: subs[0] || null }
+}
+
+function summarizeBilling(labs, subs) {
+  const lifetimeLabs = []
+  const monthlyLabs  = []
+  for (const lab of labs) {
+    const c = classifyLab(subs.filter(s => s.labId === lab.id))
+    const row = {
+      _id: lab.id,
+      name: lab.name,
+      plan: c.current?.plan || null,
+      price: c.current?.price || 0,
+      validUntil: c.current?.validUntil || null,
+    }
+    if (c.billingPhase === 'monthly') monthlyLabs.push(row)
+    else if (c.billingPhase === 'lifetime') lifetimeLabs.push(row)
+  }
+  return {
+    lifetimeCount: lifetimeLabs.length,
+    monthlyCount:  monthlyLabs.length,
+    lifetimeLabs,
+    monthlyLabs,
+  }
+}
 
 // ─── Price list (catalog for NEW subscriptions only) ─────────────────────────
 router.get('/pricing', async (req, res) => {

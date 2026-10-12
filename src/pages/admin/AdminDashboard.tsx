@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { getAdminStats } from '../../api/admin'
+import { PriceFields } from './AdminPricing'
 
 interface Stats {
   totalUsers: number
@@ -11,9 +12,57 @@ interface Stats {
   openOrders: number
   delayedOrders: number
   mrr: number
+  billing?: {
+    lifetimeCount: number
+    monthlyCount: number
+    lifetimeLabs: { _id: string; name: string; plan: string | null; price: number; validUntil: string | null }[]
+    monthlyLabs: { _id: string; name: string; plan: string | null; price: number; validUntil: string | null }[]
+  }
   recentSignups: { name: string; email: string; role: string; createdAt: string }[]
   ordersByMonth: { month: string; count: number }[]
   topLabs: { name: string; orders: number }[]
+}
+
+const PLAN_SHORT: Record<string, string> = {
+  lab_lifetime_3y: 'חד-פעמי 3 שנים',
+  lab_starter: 'עד 3 רופאים',
+  lab_standard: 'עד 10 רופאים',
+  lab_pro: 'ללא הגבלה',
+}
+
+function PhaseList({ title, empty, rows, tone }: {
+  title: string
+  empty: string
+  tone: string
+  rows: { _id: string; name: string; plan: string | null; price: number; validUntil: string | null }[]
+}) {
+  return (
+    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+      <h3 className={`text-sm font-semibold mb-3 ${tone}`}>{title}</h3>
+      {rows.length === 0 ? (
+        <p className="text-xs text-gray-500">{empty}</p>
+      ) : (
+        <div className="space-y-2">
+          {rows.map(r => {
+            const until = r.validUntil ? new Date(r.validUntil) : null
+            const days = until ? Math.ceil((until.getTime() - Date.now()) / 86400000) : null
+            return (
+              <div key={r._id} className="flex items-center justify-between gap-2 text-sm border-b border-gray-800 pb-2">
+                <div>
+                  <p className="text-white font-medium">{r.name}</p>
+                  <p className="text-[11px] text-gray-500">{PLAN_SHORT[r.plan || ''] || r.plan} · ₪{r.price.toLocaleString('he-IL')}</p>
+                </div>
+                <div className="text-left text-[11px] text-gray-400">
+                  {until && <p>{until.toLocaleDateString('he-IL')}</p>}
+                  {days !== null && <p>{days >= 0 ? `${days} ימים נותרו` : `הסתיים לפני ${Math.abs(days)} ימים`}</p>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const KPI = ({ label, value, sub, color = 'text-white', to }: {
@@ -67,6 +116,28 @@ export default function AdminDashboard() {
         <KPI label="עבודות פתוחות" value={stats.openOrders}   color="text-yellow-400" />
         <KPI label="עבודות מאחרות" value={stats.delayedOrders} color={stats.delayedOrders > 0 ? 'text-red-400' : 'text-gray-400'} />
         <KPI label="לוגים"          value="צפה ←" color="text-gray-400" to="/admin/logs" />
+        <KPI label="בתוך 3 שנים" value={stats.billing?.lifetimeCount ?? 0} color="text-blue-300" sub="תשלום חד-פעמי" to="/admin/labs" />
+        <KPI label="חודשי אחרי 3 שנים" value={stats.billing?.monthlyCount ?? 0} color="text-emerald-300" sub="משלמות לפי חבילה" to="/admin/labs" />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <PhaseList
+          title="בתוך 3 שנים — חד-פעמי"
+          empty="אין מעבדות בתקופת 3 השנים"
+          rows={stats.billing?.lifetimeLabs ?? []}
+          tone="text-blue-300"
+        />
+        <PhaseList
+          title="סיימו 3 שנים — משלמות חודשי"
+          empty="אין מעבדות בתשלום חודשי"
+          rows={stats.billing?.monthlyLabs ?? []}
+          tone="text-emerald-300"
+        />
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-white mb-2">מחירון — לחץ על המספר וערוך, אחר כך שמור</h2>
+        <PriceFields />
       </div>
 
       {/* Quick actions */}

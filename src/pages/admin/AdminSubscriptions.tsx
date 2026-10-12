@@ -213,8 +213,13 @@ export default function AdminSubscriptions() {
 
                   <div className="text-right flex-shrink-0">
                     {days !== null && (
-                      <p className={`text-xs font-medium ${isExpired ? 'text-red-400' : isWarn ? 'text-yellow-400' : 'text-gray-500'}`}>
+                      <p className={`text-xs font-medium ${isExpired ? 'text-red-400' : isWarn ? 'text-yellow-400' : 'text-gray-400'}`}>
                         {isExpired ? `פג לפני ${Math.abs(days)} ימים` : `${days} ימים נותרו`}
+                      </p>
+                    )}
+                    {endDate && (
+                      <p className="text-[11px] text-white mt-0.5">
+                        {isExpired ? 'הסתיים' : 'עד'} {new Date(endDate).toLocaleDateString('he-IL')}
                       </p>
                     )}
                     <p className={`text-xs text-gray-500 mt-0.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</p>
