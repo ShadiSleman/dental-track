@@ -1,0 +1,6 @@
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') })
+const { PrismaClient } = require('@prisma/client')
+const p = new PrismaClient()
+p.user.updateMany({ where: { role: 'doctor' }, data: { labId: null } })
+  .then(r => console.log('Cleared labId from all doctors:', r))
+  .finally(() => p.$disconnect())

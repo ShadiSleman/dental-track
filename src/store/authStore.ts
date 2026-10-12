@@ -31,7 +31,8 @@ interface AuthStore {
   token: string | null
   user: User | null
   _hasHydrated: boolean
-  setAuth: (token: string, user: User) => void
+  _sessionOnly: boolean
+  setAuth: (token: string, user: User, rememberMe?: boolean) => void
   logout: () => void
   setHasHydrated: (v: boolean) => void
 }
@@ -42,12 +43,21 @@ export const useAuthStore = create<AuthStore>()(
       // Initialise from cookie immediately — no wait for localStorage hydration
       token: cookieToken,
       user:  cookieUser,
-      _hasHydrated: !!cookieToken, // if cookie exists, skip spinner
-      setAuth: (token, user) => {
-        set({ token, user })
-        // Backup to cookie so Chrome can restore after localStorage loss
-        setCookie(COOKIE_NAME, token)
-        setCookie(COOKIE_USER, JSON.stringify(user))
+      _hasHydrated: !!cookieToken,
+      _sessionOnly: false,
+      setAuth: (token, user, rememberMe = true) => {
+        set({ token, user, _sessionOnly: !rememberMe })
+        if (rememberMe) {
+          // Persist: 30-day cookies + localStorage
+          setCookie(COOKIE_NAME, token)
+          setCookie(COOKIE_USER, JSON.stringify(user))
+        } else {
+          // Session only: clear any previous persistent auth
+          clearCookie(COOKIE_NAME)
+          clearCookie(COOKIE_USER)
+          // Let zustand write to localStorage, then immediately wipe it
+          setTimeout(() => localStorage.removeItem('dt-auth'), 50)
+        }
       },
       logout: () => {
         set({ token: null, user: null })
@@ -62,7 +72,10 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'dt-auth',
-      partialize: (s) => ({ token: s.token, user: s.user }),
+      // Session-only mode: persist empty object so localStorage has no token
+      partialize: (s) => s._sessionOnly
+        ? { token: null, user: null }
+        : { token: s.token, user: s.user },
       onRehydrateStorage: () => (state, error) => {
         if (error) console.warn('[auth] rehydrate error:', error)
         const s = state ?? useAuthStore.getState()

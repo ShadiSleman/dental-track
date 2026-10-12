@@ -74,6 +74,7 @@ export default function NewWorkOrder() {
   const [selectedLab, setSelectedLab] = useState<Lab | null>(null)
   const [labs, setLabs] = useState<Lab[]>([])
   const [labsLoading, setLabsLoading] = useState(false)
+  const [labSearch, setLabSearch] = useState('')
 
   const [form, setForm] = useState({
     firstName: '',
@@ -154,30 +155,46 @@ export default function NewWorkOrder() {
       {/* Lab selection screen */}
       {!selectedLab ? (
         <>
-          <p className="text-sm text-gray-500 mb-4">בחר מעבדה לשליחת העבודה:</p>
+          <p className="text-sm text-gray-500 mb-3">בחר מעבדה לשליחת העבודה:</p>
+
+          {/* Search */}
+          <div className="relative mb-4">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+            <input
+              type="text"
+              placeholder="חיפוש מעבדה..."
+              value={labSearch}
+              onChange={e => setLabSearch(e.target.value)}
+              className="input pr-9"
+            />
+          </div>
+
           {labsLoading ? (
             <div className="flex justify-center py-12">
               <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="space-y-3">
-              {labs.map(lab => (
-                <button
-                  key={lab._id}
-                  type="button"
-                  onClick={() => setSelectedLab(lab)}
-                  className="w-full card flex items-center gap-4 hover:shadow-md hover:border-primary-300 transition-all cursor-pointer text-right"
-                >
-                  <LabLogo lab={lab} size="lg" />
-                  <div>
-                    <p className="font-bold text-gray-900 text-lg">{lab.name}</p>
-                    {lab.address && <p className="text-sm text-gray-400">{lab.address}</p>}
-                  </div>
-                  <div className="mr-auto text-gray-300 text-2xl">‹</div>
-                </button>
-              ))}
-              {labs.length === 0 && !labsLoading && (
-                <p className="text-center text-gray-400 py-8">לא נמצאו מעבדות פעילות</p>
+              {labs
+                .filter(l => l.name.toLowerCase().includes(labSearch.toLowerCase()) ||
+                             (l.address || '').toLowerCase().includes(labSearch.toLowerCase()))
+                .map(lab => (
+                  <button
+                    key={lab._id}
+                    type="button"
+                    onClick={() => setSelectedLab(lab)}
+                    className="w-full card flex items-center gap-4 hover:shadow-md hover:border-primary-300 transition-all cursor-pointer text-right"
+                  >
+                    <LabLogo lab={lab} size="lg" />
+                    <div>
+                      <p className="font-bold text-gray-900 text-lg">{lab.name}</p>
+                      {lab.address && <p className="text-sm text-gray-400">{lab.address}</p>}
+                    </div>
+                    <div className="mr-auto text-gray-300 text-2xl">‹</div>
+                  </button>
+                ))}
+              {labs.filter(l => l.name.toLowerCase().includes(labSearch.toLowerCase())).length === 0 && (
+                <p className="text-center text-gray-400 py-8">לא נמצאו מעבדות</p>
               )}
             </div>
           )}

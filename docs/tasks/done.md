@@ -39,3 +39,5 @@
 | Vercel deploy | 6 ENV vars + Production build ✅ |
 | ChatPanel | הוחלף useSocket ב-setInterval polling |
 | NewWorkOrder form | שדות חדשים: שם פרטי/משפחה, מין, ת. לידה (גיל אוטו'), ת. סריקה — הוסרו workType + dueDate |
+
+| 12/10/2026 | Multi-lab architecture � GET /api/labs, GET /api/labs/mine, lab selection in NewWorkOrder, LabLogo component, per-lab header in AppLayout, seedMultiLab.js |

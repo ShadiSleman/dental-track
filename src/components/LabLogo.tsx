@@ -1,11 +1,11 @@
-import React from 'react'
+import { useState } from 'react'
 
 // Deterministic color from lab id/name
 function labColor(seed: string): string {
   const palette = [
-    '#1a3a6b', // navy (GAZI DENT)
-    '#7c3aed', // purple (Smile Pro)
-    '#0d9488', // teal (Pearl Tech)
+    '#1a3a6b', // navy
+    '#7c3aed', // purple
+    '#0d9488', // teal
     '#dc2626', // red
     '#d97706', // amber
     '#0284c7', // sky
@@ -16,7 +16,7 @@ function labColor(seed: string): string {
 }
 
 function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  return name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 interface Props {
@@ -26,16 +26,32 @@ interface Props {
 }
 
 export default function LabLogo({ lab, size = 'md', className = '' }: Props) {
-  const seed = lab._id ?? lab.id ?? lab.name
+  const [imgError, setImgError] = useState(false)
+  const seed  = lab._id ?? lab.id ?? lab.name
   const color = labColor(seed)
-  const sizeMap = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-16 h-16 text-xl' }
-  const cls = `${sizeMap[size]} rounded-xl flex items-center justify-center font-bold text-white flex-shrink-0 ${className}`
-
-  if (lab.logoUrl) {
-    return <img src={lab.logoUrl} alt={lab.name} className={`${cls} object-contain bg-white`} />
+  const sizeMap = {
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-10 h-10 text-sm',
+    lg: 'w-16 h-16 text-xl',
   }
+  const base = `${sizeMap[size]} rounded-xl flex-shrink-0 ${className}`
+
+  if (lab.logoUrl && !imgError) {
+    return (
+      <img
+        src={lab.logoUrl}
+        alt={lab.name}
+        onError={() => setImgError(true)}
+        className={`${base} object-contain bg-white border border-gray-100`}
+      />
+    )
+  }
+
   return (
-    <div className={cls} style={{ backgroundColor: color }}>
+    <div
+      className={`${base} flex items-center justify-center font-bold text-white`}
+      style={{ backgroundColor: color }}
+    >
       {initials(lab.name)}
     </div>
   )

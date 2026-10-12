@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6d28d9"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="36" fill="url(#bg)"/>
+  <!-- Tooth shape -->
+  <path d="M100 38 C78 38 62 54 62 72 C62 84 66 90 70 98 C72 104 74 116 76 128 C78 140 82 150 88 150 C92 150 94 144 96 136 C98 128 100 122 100 122 C100 122 102 128 104 136 C106 144 108 150 112 150 C118 150 122 140 124 128 C126 116 128 104 130 98 C134 90 138 84 138 72 C138 54 122 38 100 38Z" fill="white" opacity="0.95"/>
+  <!-- Smile arc on tooth -->
+  <path d="M82 92 Q100 108 118 92" fill="none" stroke="#6d28d9" stroke-width="4" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="100" y="174" text-anchor="middle" font-size="22" fill="white" font-family="Arial,sans-serif" font-weight="800" letter-spacing="1">SMILE PRO</text>
+</svg>

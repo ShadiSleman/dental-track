@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { token, user } = await login(email, password)
-      setAuth(token, user)
+      setAuth(token, user, rememberMe)
       if (user.role === 'super_admin') navigate('/admin')
       else navigate('/dashboard')
     } catch {
@@ -75,8 +75,8 @@ export default function LoginPage() {
             >
               <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl"
                 style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-                <img src="/logo.png" className="w-full h-full object-contain p-1" alt="GAZI DENT" />
-              </div>
+              <img src="/logo.png" className="w-full h-full object-contain p-1" alt="DentalTrack" />
+            </div>
             </motion.div>
 
             <motion.div
@@ -84,7 +84,7 @@ export default function LoginPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
             >
-              <h1 className="text-3xl font-extrabold tracking-widest text-white mb-1">GAZI DENT</h1>
+              <h1 className="text-3xl font-extrabold tracking-widest text-white mb-1">DentalTrack</h1>
               <p className="text-blue-200 text-sm font-light">מערכת מעקב עבודות מעבדת שיניים</p>
             </motion.div>
           </div>
@@ -108,7 +108,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    placeholder="doctor@clinic.co.il"
+                    placeholder=""
                     dir="ltr"
                   />
                 </div>
@@ -128,7 +128,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    placeholder="••••••••"
+                    placeholder=""
                     dir="ltr"
                   />
                   <button
@@ -195,7 +195,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="px-8 pb-6 text-center">
-            <p className="text-xs text-gray-400">© 2026 GAZI DENT · כל הזכויות שמורות</p>
+            <p className="text-xs text-gray-400">© 2026 DentalTrack · כל הזכויות שמורות</p>
           </div>
         </div>
 
