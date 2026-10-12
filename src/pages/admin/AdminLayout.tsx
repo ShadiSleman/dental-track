@@ -1,6 +1,40 @@
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 
+/** Shown on screens narrower than md (768px) */
+function MobileBlock() {
+  const { logout } = useAuthStore()
+  const navigate   = useNavigate()
+  return (
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-8 text-center">
+      <div className="text-6xl mb-6">🖥️</div>
+      <h1 className="text-xl font-bold text-white mb-3">Admin Panel</h1>
+      <p className="text-gray-400 text-sm leading-relaxed mb-2">
+        לוח הניהול של המפתח מיועד לשימוש במחשב בלבד.
+      </p>
+      <p className="text-gray-500 text-xs mb-8">
+        אנא פתח מדפדפן במחשב נייח או נייד.
+      </p>
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-xs text-gray-400 text-right space-y-1">
+          <p className="text-gray-300 font-medium text-sm mb-2">📋 מה זמין במחשב:</p>
+          <p>🏭 ניהול מעבדות (CRUD מלא)</p>
+          <p>👥 ניהול משתמשים</p>
+          <p>💳 מנויים ותשלומים</p>
+          <p>📊 סטטיסטיקות ולוגים</p>
+          <p>🎧 תמיכה</p>
+        </div>
+        <button
+          onClick={() => { logout(); navigate('/login') }}
+          className="w-full py-2.5 border border-gray-700 text-gray-400 hover:text-white rounded-xl text-sm transition-colors"
+        >
+          יציאה ←
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const ADMIN_NAV = [
   { to: '/admin',               label: 'דשבורד',   icon: '📊', exact: true },
   { to: '/admin/users',         label: 'משתמשים',  icon: '👥' },
@@ -25,7 +59,14 @@ export default function AdminLayout() {
     exact ? location.pathname === to : location.pathname.startsWith(to)
 
   return (
-    <div className="min-h-screen flex bg-gray-950 text-white">
+    <>
+      {/* ── Mobile block (shown only on small screens) ── */}
+      <div className="md:hidden">
+        <MobileBlock />
+      </div>
+
+      {/* ── Desktop layout ── */}
+    <div className="hidden md:flex min-h-screen bg-gray-950 text-white">
       {/* Sidebar */}
       <aside className="w-56 flex-shrink-0 bg-gray-900 border-l border-gray-800 flex flex-col">
         <div className="px-4 py-5 border-b border-gray-800">
@@ -71,5 +112,6 @@ export default function AdminLayout() {
         </div>
       </main>
     </div>
+    </>
   )
 }
