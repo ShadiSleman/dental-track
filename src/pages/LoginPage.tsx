@@ -75,7 +75,7 @@ export default function LoginPage() {
             >
               <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl"
                 style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-              <img src="/logo.png" className="w-full h-full object-contain p-1" alt="DentalTrack" />
+              <img src="/logo-app.svg" className="w-full h-full object-contain p-2" alt="DentalTrack" />
             </div>
             </motion.div>
 

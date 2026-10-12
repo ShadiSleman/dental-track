@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a"/>
+      <stop offset="100%" style="stop-color:#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="tooth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#dbeafe;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+
+  <!-- Tooth shape (large, centered) -->
+  <path d="
+    M100 28
+    C 78 28, 56 44, 56 64
+    C 56 78, 61 86, 66 96
+    C 69 104, 71 118, 73 132
+    C 75 146, 80 158, 87 158
+    C 92 158, 95 150, 97 140
+    C 99 130, 100 124, 100 124
+    C 100 124, 101 130, 103 140
+    C 105 150, 108 158, 113 158
+    C 120 158, 125 146, 127 132
+    C 129 118, 131 104, 134 96
+    C 139 86, 144 78, 144 64
+    C 144 44, 122 28, 100 28Z
+  " fill="url(#tooth)" opacity="0.97"/>
+
+  <!-- Cross/plus mark  small cross on upper tooth -->
+  <line x1="100" y1="50" x2="100" y2="66" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+  <line x1="92"  y1="58" x2="108" y2="58" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Bottom text: DT -->
+  <text x="100" y="185" text-anchor="middle" font-size="20" fill="white" font-family="Arial,sans-serif" font-weight="900" letter-spacing="4" opacity="0.9">DENTAL</text>
+</svg>
