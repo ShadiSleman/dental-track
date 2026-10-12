@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getAllOrders, getOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
@@ -31,11 +31,32 @@ const matchSearch = (o: WorkOrder, q: string) => {
 
 const PAGE_SIZE = 20
 
+/** Group orders by doctor name → Map<doctorName, WorkOrder[]> */
+function groupByDoctor(orders: WorkOrder[]): Map<string, WorkOrder[]> {
+  const map = new Map<string, WorkOrder[]>()
+  for (const o of orders) {
+    const name = o.doctor?.name ?? 'לא ידוע'
+    if (!map.has(name)) map.set(name, [])
+    map.get(name)!.push(o)
+  }
+  return map
+}
+
+/** Summary badge colors per stage bucket */
+function stageBucket(o: WorkOrder) {
+  if (o.currentStage === 'delivered') return 'done'
+  if (o.isDelayed) return 'delayed'
+  if (o.requiresDoctorApproval) return 'approval'
+  return 'active'
+}
+
 export default function LabDashboard() {
   const { orders, setOrders, upsertOrder, loading, setLoading } = useOrdersStore()
-  const [filter, setFilter] = useState<FilterKey>('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage]     = useState(1)
+  const [filter, setFilter]         = useState<FilterKey>('all')
+  const [search, setSearch]         = useState('')
+  const [page, setPage]             = useState(1)
+  const [groupMode, setGroupMode]   = useState(true)          // true = group by doctor
+  const [collapsed, setCollapsed]   = useState<Set<string>>(new Set()) // collapsed doctor names
 
   useEffect(() => {
     setLoading(true)
@@ -59,8 +80,18 @@ export default function LabDashboard() {
       .finally(() => setLoading(false))
   }, [setOrders, setLoading, upsertOrder])
 
-  // Reset page on filter/search change
-  useEffect(() => { setPage(1) }, [filter, search])
+  // Reset page on filter/search/groupMode change
+  useEffect(() => { setPage(1) }, [filter, search, groupMode])
+
+  const toggleCollapse = (name: string) =>
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+
+  const collapseAll = () => setCollapsed(new Set(groupByDoctor(filtered).keys()))
+  const expandAll   = () => setCollapsed(new Set())
 
   const filtered = orders.filter((o: WorkOrder) => {
     const matchFilter =
@@ -99,9 +130,23 @@ export default function LabDashboard() {
 
   return (
     <div className="space-y-4 pb-20 md:pb-4">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">לוח עבודות</h2>
-        <p className="text-sm text-gray-500">כל העבודות במעבדה</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">לוח עבודות</h2>
+          <p className="text-sm text-gray-500">כל העבודות במעבדה</p>
+        </div>
+        {/* Toggle: group by doctor / flat list */}
+        <button
+          onClick={() => setGroupMode(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+            groupMode
+              ? 'bg-[#1a3a6b] text-white border-[#1a3a6b]'
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <span>{groupMode ? '📂' : '📋'}</span>
+          {groupMode ? 'לפי רופא' : 'רשימה שטוחה'}
+        </button>
       </div>
 
       {/* KPI cards — clickable */}
@@ -161,7 +206,17 @@ export default function LabDashboard() {
           <p className="text-4xl mb-3">📋</p>
           <p>{search ? 'לא נמצאו תוצאות לחיפוש' : 'אין עבודות'}</p>
         </div>
+      ) : groupMode ? (
+        /* ─── Group by doctor ─── */
+        <DoctorGroupView
+          filtered={filtered}
+          collapsed={collapsed}
+          onToggle={toggleCollapse}
+          onCollapseAll={collapseAll}
+          onExpandAll={expandAll}
+        />
       ) : (
+        /* ─── Flat list ─── */
         <>
           <div className="space-y-3">
             {filtered.slice(0, page * PAGE_SIZE).map((o: WorkOrder) => (
@@ -180,4 +235,118 @@ export default function LabDashboard() {
       )}
     </div>
   )
+}
+
+/* ─── DoctorGroupView component ────────────────────────────────────────────── */
+function DoctorGroupView({
+  filtered,
+  collapsed,
+  onToggle,
+  onCollapseAll,
+  onExpandAll,
+}: {
+  filtered: WorkOrder[]
+  collapsed: Set<string>
+  onToggle: (name: string) => void
+  onCollapseAll: () => void
+  onExpandAll: () => void
+}) {
+  const groups = groupByDoctor(filtered)
+  const doctorNames = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'he'))
+  const allCollapsed = doctorNames.every(n => collapsed.has(n))
+
+  return (
+    <div className="space-y-3">
+      {/* Collapse / Expand all */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={allCollapsed ? onExpandAll : onCollapseAll}
+          className="text-xs text-[#1a3a6b] underline underline-offset-2 hover:text-blue-700"
+        >
+          {allCollapsed ? 'פתח הכל' : 'כווץ הכל'}
+        </button>
+      </div>
+
+      {doctorNames.map(doctorName => {
+        const doctorOrders = groups.get(doctorName)!
+        const isCollapsed  = collapsed.has(doctorName)
+
+        // Summary counts
+        const active   = doctorOrders.filter(o => stageBucket(o) === 'active').length
+        const approval = doctorOrders.filter(o => stageBucket(o) === 'approval').length
+        const delayed  = doctorOrders.filter(o => stageBucket(o) === 'delayed').length
+        const done     = doctorOrders.filter(o => stageBucket(o) === 'done').length
+
+        return (
+          <div key={doctorName} className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            {/* Doctor header row */}
+            <button
+              onClick={() => onToggle(doctorName)}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-l from-[#f0f4ff] to-white hover:from-[#e0eaff] transition-colors text-right"
+            >
+              {/* Avatar initials */}
+              <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm text-white"
+                style={{ background: doctorColor(doctorName) }}>
+                {initials(doctorName)}
+              </div>
+
+              <div className="flex-1 min-w-0 text-right">
+                <p className="font-bold text-gray-900 text-sm truncate">ד"ר {doctorName}</p>
+                <div className="flex gap-1.5 flex-wrap mt-0.5">
+                  {active   > 0 && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 rounded-full">{active} פעיל</span>}
+                  {approval > 0 && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 rounded-full">{approval} ממתין</span>}
+                  {delayed  > 0 && <span className="text-[10px] bg-red-100 text-red-600 px-1.5 rounded-full">{delayed} מאחר</span>}
+                  {done     > 0 && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-full">{done} הסתיים</span>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-gray-400 font-medium">{doctorOrders.length}</span>
+                <svg
+                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  viewBox="0 0 20 20" fill="currentColor"
+                >
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+                </svg>
+              </div>
+            </button>
+
+            {/* Orders list */}
+            <AnimatePresence initial={false}>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-3 space-y-2 bg-gray-50/60">
+                    {doctorOrders.map(o => (
+                      <WorkOrderCard key={o._id} order={o} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ─── Helpers ─── */
+function initials(name: string) {
+  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
+const DOCTOR_COLORS = [
+  '#1a3a6b','#2563eb','#7c3aed','#db2777','#059669',
+  '#d97706','#0891b2','#dc2626','#65a30d','#9333ea',
+]
+function doctorColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return DOCTOR_COLORS[Math.abs(hash) % DOCTOR_COLORS.length]
 }

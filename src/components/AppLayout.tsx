@@ -6,6 +6,28 @@ import NotificationBell from './NotificationBell'
 import { useOnClickOutside } from '../hooks/useOnClickOutside'
 import LabLogo from './LabLogo'
 
+/** Tooth logo — inline SVG, never fails to load */
+function AppLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const px = size === 'sm' ? 28 : 36
+  return (
+    <div
+      className="flex-shrink-0 rounded-full flex items-center justify-center"
+      style={{
+        width: px, height: px,
+        background: 'linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)',
+      }}
+    >
+      <svg viewBox="0 0 100 120" width={px * 0.58} height={px * 0.58} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 8 C32 8,16 22,16 40 C16 54,21 63,26 73 C29 81,31 94,33 105 C35 114,39 118,44 118 C48 118,50 110,50 110 C50 110,52 118,56 118 C61 118,65 114,67 105 C69 94,71 81,74 73 C79 63,84 54,84 40 C84 22,68 8,50 8Z"
+          fill="white" opacity="0.95"/>
+        <line x1="50" y1="90" x2="50" y2="118" stroke="rgba(37,99,235,0.3)" strokeWidth="1.5"/>
+        <line x1="50" y1="24" x2="50" y2="36" stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round"/>
+        <line x1="44" y1="30" x2="56" y2="30" stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round"/>
+      </svg>
+    </div>
+  )
+}
+
 const NAV_ITEMS = {
   doctor: [
     { to: '/dashboard', label: 'עבודות שלי', icon: '🦷' },
@@ -139,7 +161,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </>
             ) : (
               <>
-                <img src="/logo.png" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" alt="DentalTrack" />
+                <AppLogo />
                 <span className="font-extrabold text-[#1a3a6b] text-base sm:text-lg tracking-wide">DentalTrack</span>
               </>
             )}

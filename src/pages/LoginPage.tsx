@@ -73,10 +73,22 @@ export default function LoginPage() {
               transition={{ delay: 0.15, duration: 0.4 }}
               className="flex justify-center mb-4"
             >
-              <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl"
-                style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-              <img src="/logo-app.svg" className="w-full h-full object-contain p-2" alt="DentalTrack" />
-            </div>
+              <div className="w-24 h-24 rounded-full border-4 border-white/30 shadow-2xl flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)' }}>
+                {/* Inline tooth SVG — always renders, no external file dependency */}
+                <svg viewBox="0 0 100 120" width="56" height="56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Tooth body */}
+                  <path d="M50 8 C32 8,16 22,16 40 C16 54,21 63,26 73 C29 81,31 94,33 105 C35 114,39 118,44 118 C48 118,50 110,50 110 C50 110,52 118,56 118 C61 118,65 114,67 105 C69 94,71 81,74 73 C79 63,84 54,84 40 C84 22,68 8,50 8Z"
+                    fill="white" opacity="0.95"/>
+                  {/* Root split line */}
+                  <line x1="50" y1="90" x2="50" y2="118" stroke="rgba(37,99,235,0.3)" strokeWidth="1.5"/>
+                  {/* Shine */}
+                  <ellipse cx="37" cy="30" rx="7" ry="11" fill="white" opacity="0.2" transform="rotate(-15,37,30)"/>
+                  {/* Cross mark */}
+                  <line x1="50" y1="24" x2="50" y2="36" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round"/>
+                  <line x1="44" y1="30" x2="56" y2="30" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </div>
             </motion.div>
 
             <motion.div
