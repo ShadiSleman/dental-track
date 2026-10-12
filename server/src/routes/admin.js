@@ -197,9 +197,10 @@ router.post('/labs', async (req, res) => {
     const passwordHash = await bcrypt.hash(managerPassword, 10)
 
     // Calculate validUntil based on plan
+    const priceList = await getPriceList()
     const validUntil = new Date()
     if (plan === 'lab_lifetime_3y') {
-      validUntil.setFullYear(validUntil.getFullYear() + 3)
+      validUntil.setFullYear(validUntil.getFullYear() + (priceList.termYears || 3))
     } else {
       validUntil.setMonth(validUntil.getMonth() + 1)
     }
@@ -330,9 +331,10 @@ router.delete('/labs/:id/team/:userId', async (req, res) => {
 router.post('/labs/:id/subscriptions', async (req, res) => {
   try {
     const { plan, price, paymentNote } = req.body
+    const priceList = await getPriceList()
     const validUntil = new Date()
     if (plan === 'lab_lifetime_3y') {
-      validUntil.setFullYear(validUntil.getFullYear() + 3)
+      validUntil.setFullYear(validUntil.getFullYear() + (priceList.termYears || 3))
     } else {
       validUntil.setMonth(validUntil.getMonth() + 1)
     }
@@ -391,12 +393,15 @@ router.get('/pricing', async (req, res) => {
 
 router.patch('/pricing', async (req, res) => {
   try {
-    const { lifetimePrice, starterPrice, standardPrice, proPrice } = req.body
+    const { lifetimePrice, starterPrice, standardPrice, proPrice, termYears, starterDoctors, standardDoctors } = req.body
     const data = {}
     if (lifetimePrice != null) data.lifetimePrice = Number(lifetimePrice)
     if (starterPrice  != null) data.starterPrice  = Number(starterPrice)
     if (standardPrice != null) data.standardPrice = Number(standardPrice)
     if (proPrice      != null) data.proPrice      = Number(proPrice)
+    if (termYears != null) data.termYears = Math.max(1, Number(termYears) || 1)
+    if (starterDoctors != null) data.starterDoctors = Math.max(1, Number(starterDoctors) || 1)
+    if (standardDoctors != null) data.standardDoctors = Math.max(1, Number(standardDoctors) || 1)
     await getPriceList()
     const row = await prisma.priceList.update({ where: { id: 'default' }, data })
     res.json(row)

@@ -101,10 +101,13 @@ model LabMember {
 // Catalog prices for NEW labs only. Existing subscriptions keep the price stored on them.
 model PriceList {
   id            String   @id @default("default")
-  lifetimePrice Float    @default(19000)
-  starterPrice  Float    @default(290)
-  standardPrice Float    @default(590)
-  proPrice      Float    @default(990)
+  lifetimePrice     Float @default(19000)
+  starterPrice      Float @default(290)
+  standardPrice     Float @default(590)
+  proPrice          Float @default(990)
+  termYears         Int   @default(3)
+  starterDoctors    Int   @default(3)
+  standardDoctors   Int   @default(10)
   updatedAt     DateTime @updatedAt
 }
 

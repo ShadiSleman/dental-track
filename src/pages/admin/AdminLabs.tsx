@@ -6,18 +6,23 @@ import {
   type AdminLabEntry, type AdminLabDetail, type CreateLabPayload, type AddTeamMemberPayload, type PriceCatalog,
 } from '../../api/admin'
 import type { User } from '../../types'
-import { PriceFields } from './AdminPricing'
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
-const FALLBACK_PRICES: PriceCatalog = { lifetimePrice: 19000, starterPrice: 290, standardPrice: 590, proPrice: 990 }
+const FALLBACK_PRICES: PriceCatalog = {
+  lifetimePrice: 19000, starterPrice: 290, standardPrice: 590, proPrice: 990,
+  termYears: 3, starterDoctors: 3, standardDoctors: 10,
+}
 
 function plansFrom(c: PriceCatalog) {
   const n = (v: number) => v.toLocaleString('he-IL')
+  const y = c.termYears || 3
+  const s = c.starterDoctors || 3
+  const d = c.standardDoctors || 10
   return [
-    { key: 'lab_lifetime_3y', label: `חבילת השקה — ₪${n(c.lifetimePrice)} חד-פעמי (3 שנים)`, price: c.lifetimePrice, badge: '⭐ חובה בפתיחה', monthly: false },
-    { key: 'lab_starter',     label: `Starter — ₪${n(c.starterPrice)}/חודש (עד 3 רופאים)`, price: c.starterPrice, badge: 'אחרי 3 שנים', monthly: true },
-    { key: 'lab_standard',    label: `Standard — ₪${n(c.standardPrice)}/חודש (עד 10 רופאים)`, price: c.standardPrice, badge: 'אחרי 3 שנים', monthly: true },
-    { key: 'lab_pro',         label: `Pro — ₪${n(c.proPrice)}/חודש (ללא הגבלת רופאים)`, price: c.proPrice, badge: 'אחרי 3 שנים', monthly: true },
+    { key: 'lab_lifetime_3y', label: `חבילת השקה — ₪${n(c.lifetimePrice)} חד-פעמי (${y} שנים)`, price: c.lifetimePrice, badge: '⭐ חובה בפתיחה', monthly: false },
+    { key: 'lab_starter',     label: `אחרי ${y} שנים — ₪${n(c.starterPrice)}/חודש (עד ${s} רופאים)`, price: c.starterPrice, badge: '', monthly: true },
+    { key: 'lab_standard',    label: `אחרי ${y} שנים — ₪${n(c.standardPrice)}/חודש (עד ${d} רופאים)`, price: c.standardPrice, badge: '', monthly: true },
+    { key: 'lab_pro',         label: `אחרי ${y} שנים — ₪${n(c.proPrice)}/חודש (ללא הגבלת רופאים)`, price: c.proPrice, badge: '', monthly: true },
   ]
 }
 
@@ -120,11 +125,6 @@ export default function AdminLabs() {
             }`}
           >{label}</button>
         ))}
-      </div>
-
-      <div>
-        <h2 className="text-sm font-semibold text-white mb-2">מחירון — המספרים ניתנים לעריכה</h2>
-        <PriceFields />
       </div>
 
       {/* Search */}
@@ -794,8 +794,7 @@ function CreateLabModal({ onClose, onCreate }: { onClose: () => void; onCreate: 
           {step === 3 && (
             <>
               <p className="text-xs text-gray-400 bg-blue-900/20 border border-blue-900/30 rounded-xl px-3 py-2">
-                💡 <strong>חבילת ההשקה</strong> — ₪{(plans.find(p => p.key === 'lab_lifetime_3y')?.price ?? 19000).toLocaleString('he-IL')} (+ מע"מ) לפעם אחת, תקפה ל-3 שנים.<br/>
-                אחרי 3 שנים בוחרים חבילה חודשית: עד 3 רופאים / עד 10 / ללא הגבלה. המחיר נשמר על המנוי ולא משתנה אם מעדכנים את המחירון אחר כך.
+                💡 הסכומים והשנים נלקחים מהמחירון הנוכחי. מנוי שנשמר נשאר עם הסכום והתקופה שנרשמו לו, גם אם המחירון ישתנה אחר כך.
               </p>
 
               <div className="space-y-2">

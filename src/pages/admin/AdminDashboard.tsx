@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { getAdminStats } from '../../api/admin'
-import { PriceFields } from './AdminPricing'
 
 interface Stats {
   totalUsers: number
@@ -133,11 +132,6 @@ export default function AdminDashboard() {
           rows={stats.billing?.monthlyLabs ?? []}
           tone="text-emerald-300"
         />
-      </div>
-
-      <div>
-        <h2 className="text-sm font-semibold text-white mb-2">מחירון — לחץ על המספר וערוך, אחר כך שמור</h2>
-        <PriceFields />
       </div>
 
       {/* Quick actions */}

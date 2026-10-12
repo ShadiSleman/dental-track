@@ -97,6 +97,9 @@ export interface PriceCatalog {
   starterPrice: number
   standardPrice: number
   proPrice: number
+  termYears: number
+  starterDoctors: number
+  standardDoctors: number
 }
 
 export const getPricing = () =>
