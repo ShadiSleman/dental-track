@@ -150,7 +150,7 @@ export type SubscriptionPlan =
   | 'lab_starter'      // monthly ₪290 — up to 3 doctors
   | 'lab_standard'     // monthly ₪590 — up to 10 doctors
 
-export type SubscriptionStatus = 'active' | 'trial' | 'overdue' | 'cancelled'
+export type SubscriptionStatus = 'active' | 'trial' | 'overdue' | 'cancelled' | 'expired'
 
 export interface Subscription {
   _id: string

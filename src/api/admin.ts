@@ -86,6 +86,19 @@ export const removeLabTeamMember = (labId: string, userId: string) =>
 export const addLabSubscription = (labId: string, data: { plan: string; price: number; paymentNote?: string }) =>
   api.post<AdminSubscriptionRecord>(`/admin/labs/${labId}/subscriptions`, data).then((r) => r.data)
 
+export interface PriceCatalog {
+  lifetimePrice: number
+  starterPrice: number
+  standardPrice: number
+  proPrice: number
+}
+
+export const getPricing = () =>
+  api.get<PriceCatalog>('/admin/pricing').then((r) => r.data)
+
+export const updatePricing = (data: PriceCatalog) =>
+  api.patch<PriceCatalog>('/admin/pricing', data).then((r) => r.data)
+
 // Types for lab management
 export interface AdminLabEntry {
   _id: string

@@ -4,16 +4,17 @@ import { getSubscriptions, updateSubscription } from '../../api/admin'
 
 const VAT = 0.18
 
-type SubStatus = 'active' | 'trial' | 'overdue' | 'cancelled'
+type SubStatus = 'active' | 'trial' | 'overdue' | 'cancelled' | 'expired'
 
 const STATUS_STYLE: Record<SubStatus, string> = {
   active:    'bg-emerald-900/50 text-emerald-400',
   trial:     'bg-blue-900/50 text-blue-400',
   overdue:   'bg-red-900/50 text-red-400',
   cancelled: 'bg-gray-800 text-gray-500',
+  expired:   'bg-orange-900/50 text-orange-300',
 }
 const STATUS_LABELS: Record<SubStatus, string> = {
-  active: 'פעיל', trial: 'ניסיון', overdue: 'פגר תשלום', cancelled: 'בוטל',
+  active: 'פעיל', trial: 'ניסיון', overdue: 'פגר תשלום', cancelled: 'בוטל', expired: 'הסתיימו 3 שנים',
 }
 
 const PLAN_DISPLAY: Record<string, { label: string; color: string; monthly: boolean }> = {
@@ -61,6 +62,7 @@ export default function AdminSubscriptions() {
     setLoading(true)
     const params: Record<string, string> = {}
     if (statusFilter) params.status = statusFilter
+    params.limit = '100'
     getSubscriptions(params)
       .then(({ subscriptions, total }) => { setSubs(subscriptions as unknown as SubRow[]); setTotal(total) })
       .finally(() => setLoading(false))
@@ -145,7 +147,7 @@ export default function AdminSubscriptions() {
 
       {/* Status filter */}
       <div className="flex gap-2 flex-wrap">
-        {(['', 'active', 'trial', 'overdue', 'cancelled'] as const).map(s => (
+        {(['', 'active', 'expired', 'trial', 'overdue', 'cancelled'] as const).map(s => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}

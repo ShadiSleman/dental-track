@@ -6,6 +6,7 @@ const authJwt   = require('../middleware/authJwt')
 const roleGuard = require('../middleware/roleGuard')
 const { withId } = require('../lib/withId')
 const { uploadToR2 } = require('../lib/r2')
+const { linkToLab, unlinkFromLab, teamForLab, getPriceList, priceForPlan } = require('../lib/membership')
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } })
 
@@ -125,7 +126,7 @@ router.get('/labs', async (req, res) => {
       labs.map(async (lab) => {
         const [technicianCount, doctorCount, openOrders] = await Promise.all([
           prisma.user.count({ where: { labId: lab.id, role: 'technician' } }),
-          prisma.user.count({ where: { labId: lab.id, role: 'doctor' } }),
+          prisma.labMember.count({ where: { labId: lab.id, user: { role: 'doctor' } } }),
           prisma.workOrder.count({ where: { labId: lab.id, currentStage: { not: 'delivered' } } }),
         ])
         const sub = await prisma.subscription.findFirst({
@@ -146,11 +147,7 @@ router.get('/labs/:id', async (req, res) => {
     if (!lab) return res.status(404).json({ error: 'Lab not found' })
 
     const [team, subscriptions, openOrders, totalOrders] = await Promise.all([
-      prisma.user.findMany({
-        where:   { labId: lab.id },
-        select:  { id: true, name: true, email: true, role: true, phone: true, isActive: true, createdAt: true },
-        orderBy: { createdAt: 'asc' },
-      }),
+      teamForLab(lab.id),
       prisma.subscription.findMany({
         where:   { labId: lab.id },
         orderBy: { createdAt: 'desc' },
@@ -215,7 +212,7 @@ router.post('/labs', async (req, res) => {
           labId:      lab.id,
           plan,
           status:     'active',
-          price:      Number(price) || planDefaultPrice(plan),
+          price:      Number(price) || priceForPlan(await getPriceList(), plan),
           validUntil,
         },
       })
@@ -272,8 +269,11 @@ router.post('/labs/:id/team', async (req, res) => {
     if (!email || !role) return res.status(400).json({ error: 'email ו-role חובה' })
 
     let user = await prisma.user.findUnique({ where: { email } })
+    if (user && user.role === 'doctor') {
+      await linkToLab(user.id, req.params.id)
+      return res.status(200).json({ ...withId(user), linkedExisting: true })
+    }
     if (user) {
-      // Assign existing user to this lab
       user = await prisma.user.update({
         where: { id: user.id },
         data:  { labId: req.params.id, role },
@@ -281,9 +281,19 @@ router.post('/labs/:id/team', async (req, res) => {
     } else {
       if (!password) return res.status(400).json({ error: 'סיסמה נדרשת למשתמש חדש' })
       const passwordHash = await bcrypt.hash(password, 10)
+      let clinicId = null
+      if (role === 'doctor') {
+        const clinic = await prisma.clinic.create({ data: { name: `מרפאת ${name || email}` } })
+        clinicId = clinic.id
+      }
       user = await prisma.user.create({
-        data: { name: name || email, email, passwordHash, role, phone: phone || null, labId: req.params.id },
+        data: {
+          name: name || email, email, passwordHash, role, phone: phone || null,
+          labId: role === 'doctor' ? null : req.params.id,
+          clinicId,
+        },
       })
+      if (role === 'doctor') await linkToLab(user.id, req.params.id)
     }
     res.status(201).json(withId(user))
   } catch (err) { res.status(500).json({ error: err.message }) }
@@ -292,10 +302,15 @@ router.post('/labs/:id/team', async (req, res) => {
 // DELETE /admin/labs/:id/team/:userId — remove user from lab
 router.delete('/labs/:id/team/:userId', async (req, res) => {
   try {
-    await prisma.user.update({
-      where: { id: req.params.userId },
-      data:  { labId: null },
-    })
+    const user = await prisma.user.findUnique({ where: { id: req.params.userId } })
+    if (user?.role === 'doctor') {
+      await unlinkFromLab(user.id, req.params.id)
+    } else {
+      await prisma.user.update({
+        where: { id: req.params.userId },
+        data:  { labId: null },
+      })
+    }
     res.json({ ok: true })
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
@@ -315,7 +330,7 @@ router.post('/labs/:id/subscriptions', async (req, res) => {
         labId:      req.params.id,
         plan,
         status:     'active',
-        price:      Number(price) || planDefaultPrice(plan),
+        price:      Number(price) || priceForPlan(await getPriceList(), plan),
         validUntil,
       },
     })
@@ -323,17 +338,26 @@ router.post('/labs/:id/subscriptions', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
-function planDefaultPrice(plan) {
-  const prices = {
-    lab_lifetime_3y: 19900,
-    lab_starter:     290,
-    lab_standard:    590,
-    lab_pro:         990,
-    lab_basic:       499,
-    enterprise:      0,
-  }
-  return prices[plan] || 0
-}
+// ─── Price list (catalog for NEW subscriptions only) ─────────────────────────
+router.get('/pricing', async (req, res) => {
+  try {
+    res.json(await getPriceList())
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
+router.patch('/pricing', async (req, res) => {
+  try {
+    const { lifetimePrice, starterPrice, standardPrice, proPrice } = req.body
+    const data = {}
+    if (lifetimePrice != null) data.lifetimePrice = Number(lifetimePrice)
+    if (starterPrice  != null) data.starterPrice  = Number(starterPrice)
+    if (standardPrice != null) data.standardPrice = Number(standardPrice)
+    if (proPrice      != null) data.proPrice      = Number(proPrice)
+    await getPriceList()
+    const row = await prisma.priceList.update({ where: { id: 'default' }, data })
+    res.json(row)
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 router.get('/subscriptions', async (req, res) => {

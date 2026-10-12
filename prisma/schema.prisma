@@ -39,6 +39,7 @@ model Lab {
   users         User[]
   workOrders    WorkOrder[]
   subscriptions Subscription[]
+  members       LabMember[]
 }
 
 model Clinic {
@@ -80,6 +81,31 @@ model User {
   notifications      Notification[]
   auditLogs          AuditLog[]
   supportTickets     SupportTicket[]
+  labMemberships     LabMember[]
+}
+
+// Doctor (or any user) linked to one or more labs. A doctor can belong to several labs.
+model LabMember {
+  id        String   @id @default(cuid())
+  labId     String
+  userId    String
+  createdAt DateTime @default(now())
+
+  lab  Lab  @relation(fields: [labId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([labId, userId])
+  @@index([userId])
+}
+
+// Catalog prices for NEW labs only. Existing subscriptions keep the price stored on them.
+model PriceList {
+  id            String   @id @default("default")
+  lifetimePrice Float    @default(19000)
+  starterPrice  Float    @default(290)
+  standardPrice Float    @default(590)
+  proPrice      Float    @default(990)
+  updatedAt     DateTime @updatedAt
 }
 
 model WorkOrder {

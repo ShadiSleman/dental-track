@@ -2,12 +2,18 @@ const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const authJwt = require('../middleware/authJwt')
 const { withId } = require('../lib/withId')
+const { labsForUser } = require('../lib/membership')
 
 router.use(authJwt)
 
 // ─── GET /api/labs — list all active labs ─────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
+    // Doctors only see labs that added them. Other roles see every active lab.
+    if (req.user.role === 'doctor') {
+      const labs = await labsForUser(req.user.id)
+      return res.json(labs.map(l => ({ ...l, _id: l.id })))
+    }
     const labs = await prisma.lab.findMany({
       where: { isActive: true },
       select: { id: true, name: true, logoUrl: true, address: true, phone: true, email: true },

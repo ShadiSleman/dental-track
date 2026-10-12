@@ -19,6 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminLabs from './pages/admin/AdminLabs'
 import AdminSubscriptions from './pages/admin/AdminSubscriptions'
+import AdminPricing from './pages/admin/AdminPricing'
 import AdminLogs from './pages/admin/AdminLogs'
 import AdminHealth from './pages/admin/AdminHealth'
 import AdminSupport from './pages/admin/AdminSupport'
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="labs" element={<AdminLabs />} />
           <Route path="subscriptions" element={<AdminSubscriptions />} />
+          <Route path="pricing" element={<AdminPricing />} />
           <Route path="logs" element={<AdminLogs />} />
           <Route path="health" element={<AdminHealth />} />
           <Route path="support" element={<AdminSupport />} />

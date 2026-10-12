@@ -8,6 +8,7 @@ const ADMIN_NAV = [
   { to: '/admin/users',         label: 'משתמשים',  icon: '👥' },
   { to: '/admin/labs',          label: 'מעבדות',   icon: '🏭' },
   { to: '/admin/subscriptions', label: 'מנויים',   icon: '💳' },
+  { to: '/admin/pricing',       label: 'מחירון',   icon: '🏷️' },
   { to: '/admin/logs',          label: 'לוגים',    icon: '📋' },
   { to: '/admin/health',        label: 'מערכת',    icon: '❤️' },
   { to: '/admin/support',       label: 'תמיכה',    icon: '🎧' },

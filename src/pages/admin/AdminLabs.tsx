@@ -2,18 +2,33 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   getAdminLabs, getAdminLab, createAdminLab, updateAdminLab, deleteAdminLab,
-  uploadLabLogo, addLabTeamMember, removeLabTeamMember, addLabSubscription,
-  type AdminLabEntry, type AdminLabDetail, type CreateLabPayload, type AddTeamMemberPayload,
+  uploadLabLogo, addLabTeamMember, removeLabTeamMember, addLabSubscription, getPricing,
+  type AdminLabEntry, type AdminLabDetail, type CreateLabPayload, type AddTeamMemberPayload, type PriceCatalog,
 } from '../../api/admin'
 import type { User } from '../../types'
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
-const PLANS = [
-  { key: 'lab_lifetime_3y', label: 'חבילת השקה — ₪19,900 חד-פעמי (3 שנים)', price: 19900, badge: '⭐ מומלץ', monthly: false },
-  { key: 'lab_starter',     label: 'Starter — ₪290/חודש (עד 3 רופאים)',       price: 290,   badge: '',          monthly: true  },
-  { key: 'lab_standard',    label: 'Standard — ₪590/חודש (עד 10 רופאים)',     price: 590,   badge: '',          monthly: true  },
-  { key: 'lab_pro',         label: 'Pro — ₪990/חודש (ללא הגבלת רופאים)',      price: 990,   badge: '',          monthly: true  },
-]
+const FALLBACK_PRICES: PriceCatalog = { lifetimePrice: 19000, starterPrice: 290, standardPrice: 590, proPrice: 990 }
+
+function plansFrom(c: PriceCatalog) {
+  const n = (v: number) => v.toLocaleString('he-IL')
+  return [
+    { key: 'lab_lifetime_3y', label: `חבילת השקה — ₪${n(c.lifetimePrice)} חד-פעמי (3 שנים)`, price: c.lifetimePrice, badge: '⭐ חובה בפתיחה', monthly: false },
+    { key: 'lab_starter',     label: `Starter — ₪${n(c.starterPrice)}/חודש (עד 3 רופאים)`, price: c.starterPrice, badge: 'אחרי 3 שנים', monthly: true },
+    { key: 'lab_standard',    label: `Standard — ₪${n(c.standardPrice)}/חודש (עד 10 רופאים)`, price: c.standardPrice, badge: 'אחרי 3 שנים', monthly: true },
+    { key: 'lab_pro',         label: `Pro — ₪${n(c.proPrice)}/חודש (ללא הגבלת רופאים)`, price: c.proPrice, badge: 'אחרי 3 שנים', monthly: true },
+  ]
+}
+
+const PLANS = plansFrom(FALLBACK_PRICES)
+
+function useLivePlans() {
+  const [plans, setPlans] = useState(PLANS)
+  useEffect(() => {
+    getPricing().then(c => setPlans(plansFrom(c))).catch(() => {})
+  }, [])
+  return plans
+}
 
 const ROLE_LABELS: Record<string, string> = {
   lab_manager: 'מנהל מעבדה', technician: 'טכנאי', courier: 'שליח', doctor: 'רופא', super_admin: 'אדמין',
@@ -539,9 +554,10 @@ function TeamTab({ lab, onReload }: { lab: AdminLabDetail; onReload: () => void 
 
 // ─── Billing Tab ──────────────────────────────────────────────────────────────
 function BillingTab({ lab, onReload }: { lab: AdminLabDetail; onReload: () => void }) {
+  const plans = useLivePlans()
   const [showAdd, setShowAdd] = useState(false)
   const [plan, setPlan]       = useState('lab_lifetime_3y')
-  const [price, setPrice]     = useState(19900)
+  const [price, setPrice]     = useState(plans[0].price)
   const [adding, setAdding]   = useState(false)
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -579,12 +595,12 @@ function BillingTab({ lab, onReload }: { lab: AdminLabDetail; onReload: () => vo
                 onChange={e => {
                   const p = e.target.value
                   setPlan(p)
-                  const found = PLANS.find(x => x.key === p)
+                  const found = plans.find(x => x.key === p)
                   if (found) setPrice(found.price)
                 }}
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
               >
-                {PLANS.map(p => (
+                {plans.map(p => (
                   <option key={p.key} value={p.key}>{p.label}</option>
                 ))}
               </select>
@@ -614,8 +630,8 @@ function BillingTab({ lab, onReload }: { lab: AdminLabDetail; onReload: () => vo
               <div key={sub._id} className={`rounded-xl border p-4 space-y-2 ${isPast ? 'border-gray-800 bg-gray-800/30' : 'border-emerald-800/40 bg-emerald-900/10'}`}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-white">{PLANS.find(p => p.key === sub.plan)?.label.split(' — ')[0] ?? sub.plan}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{PLANS.find(p => p.key === sub.plan)?.monthly ? 'חיוב חודשי' : 'תשלום חד-פעמי'}</p>
+                    <p className="text-sm font-semibold text-white">{plans.find(p => p.key === sub.plan)?.label.split(' — ')[0] ?? sub.plan}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{plans.find(p => p.key === sub.plan)?.monthly ? 'חיוב חודשי — אחרי 3 שנים' : 'תשלום חד-פעמי ל-3 שנים'}</p>
                   </div>
                   <div className="text-left">
                     <p className={`text-lg font-bold ${isPast ? 'text-gray-500' : 'text-emerald-400'}`}>
@@ -648,12 +664,17 @@ function BillingTab({ lab, onReload }: { lab: AdminLabDetail; onReload: () => vo
 
 // ─── Create Lab Modal ─────────────────────────────────────────────────────────
 function CreateLabModal({ onClose, onCreate }: { onClose: () => void; onCreate: () => void }) {
+  const plans = useLivePlans()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [form, setForm] = useState<CreateLabPayload>({
     name: '', address: '', phone: '', email: '',
     managerName: '', managerEmail: '', managerPassword: '',
-    plan: 'lab_lifetime_3y', price: 19900,
+    plan: 'lab_lifetime_3y', price: 19000,
   })
+  useEffect(() => {
+    const launch = plans.find(p => p.key === 'lab_lifetime_3y')
+    if (launch) setForm(f => ({ ...f, price: launch.price }))
+  }, [plans])
   const [loading, setLoading] = useState(false)
   const [err, setErr]         = useState('')
 
@@ -736,12 +757,12 @@ function CreateLabModal({ onClose, onCreate }: { onClose: () => void; onCreate: 
           {step === 3 && (
             <>
               <p className="text-xs text-gray-400 bg-blue-900/20 border border-blue-900/30 rounded-xl px-3 py-2">
-                💡 <strong>חבילת ההשקה</strong> — ₪19,900 (+ מע"מ) לפעם אחת, תקפה ל-3 שנים מרגע הרישום.<br/>
-                לאחר 3 שנים המעבדה תעבור למסלול חודשי לפי מספר הרופאים.
+                💡 <strong>חבילת ההשקה</strong> — ₪{(plans.find(p => p.key === 'lab_lifetime_3y')?.price ?? 19000).toLocaleString('he-IL')} (+ מע"מ) לפעם אחת, תקפה ל-3 שנים.<br/>
+                אחרי 3 שנים בוחרים חבילה חודשית: עד 3 רופאים / עד 10 / ללא הגבלה. המחיר נשמר על המנוי ולא משתנה אם מעדכנים את המחירון אחר כך.
               </p>
 
               <div className="space-y-2">
-                {PLANS.map(p => (
+                {plans.map(p => (
                   <label key={p.key}
                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                       form.plan === p.key
@@ -766,7 +787,7 @@ function CreateLabModal({ onClose, onCreate }: { onClose: () => void; onCreate: 
                 <div className="text-right">
                   <p className="text-xl font-bold text-white">₪{(form.price ?? 0).toLocaleString('he-IL')}</p>
                   <p className="text-[10px] text-gray-500">
-                    {PLANS.find(p => p.key === form.plan)?.monthly ? 'לחודש + מע"מ' : 'חד-פעמי + מע"מ (3 שנים)'}
+                    {plans.find(p => p.key === form.plan)?.monthly ? 'לחודש + מע"מ' : 'חד-פעמי + מע"מ (3 שנים)'}
                   </p>
                 </div>
               </div>

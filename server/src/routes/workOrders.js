@@ -241,6 +241,9 @@ router.post('/', roleGuard('doctor'), upload.array('files'), auditLogger('order_
     const selectedLab = await prisma.lab.findUnique({ where: { id: labId }, select: { id: true, isActive: true } })
     if (!selectedLab || !selectedLab.isActive)
       return res.status(400).json({ error: 'מעבדה לא נמצאה' })
+    const linked = await prisma.labMember.findUnique({ where: { labId_userId: { labId, userId: doctor.id } } })
+    if (!linked)
+      return res.status(403).json({ error: 'המעבדה הזו לא קישרה אותך. אפשר לשלוח עבודה רק למעבדות שהוסיפו אותך.' })
 
     if (!firstName || !lastName)
       return res.status(400).json({ error: 'יש למלא שם פרטי ושם משפחה' })

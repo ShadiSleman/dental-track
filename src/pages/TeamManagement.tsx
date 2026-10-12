@@ -39,7 +39,7 @@ export default function TeamManagement() {
     e.preventDefault()
     setFormError('')
     if (!form.name || !form.email) { setFormError('שם ואימייל הם שדות חובה'); return }
-    if (!editing && !form.password) { setFormError('סיסמה היא שדה חובה עבור משתמש חדש'); return }
+    if (!editing && !form.password && form.role !== 'doctor') { setFormError('סיסמה היא שדה חובה עבור משתמש חדש'); return }
 
     setSaving(true)
     try {
@@ -60,8 +60,12 @@ export default function TeamManagement() {
   }
 
   const handleDelete = async (m: TeamMember) => {
-    if (!confirm(`האם למחוק את ${m.name}?\n\nפעולה זו אינה ניתנת לביטול.`)) return
-    if (!confirm(`אישור סופי — למחוק לצמיתות את ${m.name}?`)) return
+    if (m.role === 'doctor') {
+      if (!confirm(`להסיר את ${m.name} מהמעבדה הזו?\n\nהרופא יישאר במערכת ויוכל להמשיך לעבוד עם מעבדות אחרות שקישרו אותו.`)) return
+    } else {
+      if (!confirm(`האם למחוק את ${m.name}?\n\nפעולה זו אינה ניתנת לביטול.`)) return
+      if (!confirm(`אישור סופי — למחוק לצמיתות את ${m.name}?`)) return
+    }
     try {
       await deleteMember(m._id)
       load()
@@ -151,8 +155,13 @@ export default function TeamManagement() {
               </div>
 
               <div>
-                <label className="label">{editing ? 'סיסמה חדשה (השאר ריק לאי שינוי)' : 'סיסמה *'}</label>
-                <input className="input" type="password" value={form.password} onChange={set('password')} placeholder="••••••••" />
+                <label className="label">
+                  {editing ? 'סיסמה חדשה (השאר ריק לאי שינוי)' : form.role === 'doctor' ? 'סיסמה (רק לרופא חדש)' : 'סיסמה *'}
+                </label>
+                <input className="input" type="password" value={form.password} onChange={set('password')} />
+                {!editing && form.role === 'doctor' && (
+                  <p className="text-xs text-gray-500 mt-1">אם הרופא כבר קיים במערכת — מספיק האימייל. הוא יקושר גם למעבדה הזו, בלי להסיר מעבדות אחרות.</p>
+                )}
               </div>
 
               <div>

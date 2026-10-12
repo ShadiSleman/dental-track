@@ -1,14 +1,14 @@
-# מה הושלם — DentalTrack
+# ×× ×××©×× â DentalTrack
 
 ---
 
-## Sprint 1 — MVP ראשוני (ספטמבר 2026)
+## Sprint 1 â MVP ×¨××©×× × (×¡×¤××××¨ 2026)
 
-- הקמת הפרויקט: React + Vite + TypeScript + Tailwind CSS
+- ××§××ª ××¤×¨×××§×: React + Vite + TypeScript + Tailwind CSS
 - Backend: Node.js + Express + MongoDB/Mongoose
-- אימות JWT
-- 5 תפקידי משתמש
-- 11 שלבי עבודה
+- ×××××ª JWT
+- 5 ×ª×¤×§××× ××©×ª××©
+- 11 ×©××× ×¢××××
 - Chat per work order (Socket.io)
 - Notification Bell (Socket.io)
 - Admin Dashboard
@@ -17,27 +17,28 @@
 
 ---
 
-## Sprint 2 — תשתית Production (אוקטובר 2026)
+## Sprint 2 â ×ª×©×ª××ª Production (×××§××××¨ 2026)
 
-| שינוי | פרטים |
+| ×©×× ×× | ×¤×¨××× |
 |---|---|
-| Android הוסר | responsive web בלבד |
-| Socket.io הוסר | polling כל 4/10 שניות |
-| MongoDB → PostgreSQL | Prisma + Neon |
-| Cloudinary → R2 | Cloudflare R2 S3-compatible |
-| Render → Vercel | Serverless Functions |
+| Android ×××¡×¨ | responsive web ×××× |
+| Socket.io ×××¡×¨ | polling ×× 4/10 ×©× ×××ª |
+| MongoDB â PostgreSQL | Prisma + Neon |
+| Cloudinary â R2 | Cloudflare R2 S3-compatible |
+| Render â Vercel | Serverless Functions |
 | GitHub | https://github.com/ShadiSleman/dental-track |
-| Prisma schema | כל 9 מודלים עם Json columns |
+| Prisma schema | ×× 9 ×××××× ×¢× Json columns |
 | seed.js | Prisma version |
-| seedDummy.js | 16 עבודות + messages + notifications |
-| usePolling | מחליף useSocket |
+| seedDummy.js | 16 ×¢×××××ª + messages + notifications |
+| usePolling | ×××××£ useSocket |
 | api/index.js | Vercel serverless entry |
 | vercel.json | routing /api/* + /* |
-| .env.example | עודכן לכל משתני הסביבה החדשים |
-| docs/ | עודכנו כל קבצי התיעוד |
-| Neon PostgreSQL | prisma db push הצליח, seed רץ |
-| Vercel deploy | 6 ENV vars + Production build ✅ |
-| ChatPanel | הוחלף useSocket ב-setInterval polling |
-| NewWorkOrder form | שדות חדשים: שם פרטי/משפחה, מין, ת. לידה (גיל אוטו'), ת. סריקה — הוסרו workType + dueDate |
+| .env.example | ×¢×××× ××× ××©×ª× × ××¡×××× ××××©×× |
+| docs/ | ×¢×××× × ×× ×§××¦× ××ª××¢×× |
+| Neon PostgreSQL | prisma db push ××¦×××, seed ×¨×¥ |
+| Vercel deploy | 6 ENV vars + Production build â |
+| ChatPanel | ×××××£ useSocket ×-setInterval polling |
+| NewWorkOrder form | ×©×××ª ×××©××: ×©× ×¤×¨××/××©×¤××, ×××, ×ª. ×××× (××× ××××'), ×ª. ×¡×¨××§× â ×××¡×¨× workType + dueDate |
 
-| 12/10/2026 | Multi-lab architecture � GET /api/labs, GET /api/labs/mine, lab selection in NewWorkOrder, LabLogo component, per-lab header in AppLayout, seedMultiLab.js |
+| 12/10/2026 | Multi-lab architecture — GET /api/labs, GET /api/labs/mine, lab selection in NewWorkOrder, LabLogo component, per-lab header in AppLayout, seedMultiLab.js |
+| 12/10/2026 | רופא בכמה מעבדות (LabMember), מחירון נפרד שלא משנה מנויים קיימים, דוגמת אורתו-דנט אחרי 3 שנים |
