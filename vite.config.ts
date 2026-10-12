@@ -10,9 +10,9 @@ export default defineConfig({
       includeAssets: ['logo.png', 'logo-192.png', 'logo-512.png', 'logo-192-maskable.png', 'logo-512-maskable.png', 'favicon.png', 'favicon-32.png'],
       // Use the existing manifest.json instead of generating one
       manifest: {
-        name: 'GAZI DENT — מעקב עבודות',
-        short_name: 'GAZI DENT',
-        description: 'מרפאה ומעבדת שיניים דיגיטלית מתקדמת',
+        name: 'DentalTrack — מעקב עבודות',
+        short_name: 'DentalTrack',
+        description: 'מערכת מעקב עבודות מעבדות שיניים',
         start_url: '/',
         display: 'standalone',
         orientation: 'portrait',

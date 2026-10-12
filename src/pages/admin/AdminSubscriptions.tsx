@@ -50,7 +50,12 @@ export default function AdminSubscriptions() {
   const [total, setTotal]     = useState(0)
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [expanded, setExpanded]   = useState<string | null>(null)
+  const [editing, setEditing]     = useState<string | null>(null)
+  const [editPrice, setEditPrice] = useState('')
+  const [editPlan, setEditPlan]   = useState('')
+  const [editUntil, setEditUntil] = useState('')
+  const [saving, setSaving]       = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -63,12 +68,33 @@ export default function AdminSubscriptions() {
 
   useEffect(load, [statusFilter])
 
-  const totalPaid    = subs.filter(s => s.status === 'active').reduce((a, s) => a + s.priceExVat, 0)
-  const totalPaidVat = subs.filter(s => s.status === 'active').reduce((a, s) => a + s.priceIncVat, 0)
+  const totalPaid    = subs.reduce((a, s) => a + s.priceExVat, 0)
+  const totalPaidVat = subs.reduce((a, s) => a + s.priceIncVat, 0)
 
   const handleStatusChange = async (sub: SubRow, status: SubStatus) => {
     await updateSubscription(sub._id, { status })
     load()
+  }
+
+  const startEdit = (sub: SubRow) => {
+    setEditing(sub._id)
+    setEditPrice(String(sub.priceExVat))
+    setEditPlan(sub.plan)
+    const end = sub.validUntil ?? sub.renewsAt
+    setEditUntil(end ? end.slice(0, 10) : '')
+  }
+
+  const saveEdit = async (sub: SubRow) => {
+    setSaving(true)
+    try {
+      await updateSubscription(sub._id, {
+        price:      Number(editPrice),
+        plan:       editPlan,
+        validUntil: editUntil ? new Date(editUntil).toISOString() : undefined,
+      } as Parameters<typeof updateSubscription>[1])
+      setEditing(null)
+      load()
+    } finally { setSaving(false) }
   }
 
   return (
@@ -101,18 +127,18 @@ export default function AdminSubscriptions() {
 
       {/* VAT note */}
       {totalPaid > 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex flex-wrap gap-6 text-sm">
+        <div className="bg-gray-900 border border-emerald-900/40 rounded-xl px-4 py-3 flex flex-wrap gap-6 text-sm">
           <div>
-            <p className="text-gray-500 text-xs mb-0.5">סה״כ גבייה ללא מע״מ</p>
-            <p className="font-bold text-white">₪{totalPaid.toLocaleString('he-IL')}</p>
+            <p className="text-gray-500 text-xs mb-0.5">ללא מע״מ</p>
+            <p className="font-bold text-gray-300">₪{totalPaid.toLocaleString('he-IL')}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-xs mb-0.5">מע״מ 18%</p>
+            <p className="text-gray-500 text-xs mb-0.5">+ מע״מ 18%</p>
             <p className="font-bold text-blue-400">₪{Math.round(totalPaid * VAT).toLocaleString('he-IL')}</p>
           </div>
-          <div>
-            <p className="text-gray-500 text-xs mb-0.5">סה״כ כולל מע״מ</p>
-            <p className="font-bold text-emerald-400">₪{totalPaidVat.toLocaleString('he-IL')}</p>
+          <div className="border-r border-gray-700 pr-6">
+            <p className="text-gray-400 text-xs mb-0.5 font-medium">✅ סה״כ גבייה כולל מע״מ</p>
+            <p className="font-bold text-emerald-400 text-xl">₪{totalPaidVat.toLocaleString('he-IL')}</p>
           </div>
         </div>
       )}
@@ -196,56 +222,98 @@ export default function AdminSubscriptions() {
                 {/* Expanded detail */}
                 {isOpen && (
                   <div className="px-4 pb-4 border-t border-gray-800 pt-4 space-y-4">
-                    {/* Date row */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <InfoBox label="📅 תחילת מנוי" value={new Date(sub.startedAt ?? sub.createdAt).toLocaleDateString('he-IL', { day: '2-digit', month: 'long', year: 'numeric' })} />
-                      <InfoBox
-                        label={isExpired ? '⚠️ פג תוקף' : '📅 סיום מנוי'}
-                        value={endDate ? new Date(endDate).toLocaleDateString('he-IL', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-                        valueColor={isExpired ? 'text-red-400' : isWarn ? 'text-yellow-400' : 'text-emerald-400'}
-                      />
-                    </div>
 
-                    {/* Payment row */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <InfoBox
-                        label="💰 ללא מע״מ"
-                        value={`₪${sub.priceExVat.toLocaleString('he-IL')}`}
-                        valueColor="text-white"
-                      />
-                      <InfoBox
-                        label="📊 מע״מ 18%"
-                        value={`₪${Math.round(sub.priceExVat * VAT).toLocaleString('he-IL')}`}
-                        valueColor="text-blue-400"
-                      />
-                      <InfoBox
-                        label="✅ כולל מע״מ"
-                        value={`₪${sub.priceIncVat.toLocaleString('he-IL')}`}
-                        valueColor="text-emerald-400"
-                      />
-                    </div>
+                    {editing === sub._id ? (
+                      /* ── Edit mode ── */
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">✏️ עריכת פרטי מנוי</p>
 
-                    {/* Status change */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400">שנה סטטוס:</span>
-                      <select
-                        value={sub.status}
-                        onChange={e => handleStatusChange(sub, e.target.value as SubStatus)}
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white"
-                      >
-                        {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                          <option key={k} value={k}>{v}</option>
-                        ))}
-                      </select>
-                      {sub.labId && (
-                        <Link
-                          to="/admin/labs"
-                          className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 flex-shrink-0"
-                        >
-                          פרטי מעבדה ←
-                        </Link>
-                      )}
-                    </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] text-gray-500 mb-1">תוכנית</label>
+                            <select value={editPlan} onChange={e => setEditPlan(e.target.value)}
+                              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-xs text-white">
+                              {Object.entries(PLAN_DISPLAY).map(([k, v]) => (
+                                <option key={k} value={k}>{v.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-gray-500 mb-1">מחיר ₪ (ללא מע״מ)</label>
+                            <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
+                              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-xs text-white" dir="ltr" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] text-gray-500 mb-1">תאריך סיום מנוי</label>
+                          <input type="date" value={editUntil} onChange={e => setEditUntil(e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-xs text-white" dir="ltr" />
+                        </div>
+
+                        {editPrice && (
+                          <div className="bg-gray-800/50 rounded-xl px-3 py-2 flex gap-6 text-xs">
+                            <span className="text-gray-400">ללא מע״מ: <strong className="text-white">₪{Number(editPrice).toLocaleString('he-IL')}</strong></span>
+                            <span className="text-gray-400">כולל מע״מ: <strong className="text-emerald-400">₪{Math.round(Number(editPrice) * 1.18).toLocaleString('he-IL')}</strong></span>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button onClick={() => saveEdit(sub)} disabled={saving}
+                            className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 text-white rounded-lg text-xs font-semibold transition-colors">
+                            {saving ? 'שומר...' : '✅ שמור'}
+                          </button>
+                          <button onClick={() => setEditing(null)}
+                            className="px-4 py-2 border border-gray-700 text-gray-400 rounded-lg text-xs transition-colors hover:text-white">
+                            ביטול
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* ── View mode ── */
+                      <>
+                        {/* Date row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <InfoBox label="📅 תחילת מנוי" value={new Date(sub.startedAt ?? sub.createdAt).toLocaleDateString('he-IL', { day: '2-digit', month: 'long', year: 'numeric' })} />
+                          <InfoBox
+                            label={isExpired ? '⚠️ פג תוקף' : '📅 סיום מנוי'}
+                            value={endDate ? new Date(endDate).toLocaleDateString('he-IL', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
+                            valueColor={isExpired ? 'text-red-400' : isWarn ? 'text-yellow-400' : 'text-emerald-400'}
+                          />
+                        </div>
+
+                        {/* Payment row */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <InfoBox label="💰 ללא מע״מ"  value={`₪${sub.priceExVat.toLocaleString('he-IL')}`} valueColor="text-white" />
+                          <InfoBox label="📊 מע״מ 18%"  value={`₪${Math.round(sub.priceExVat * VAT).toLocaleString('he-IL')}`} valueColor="text-blue-400" />
+                          <InfoBox label="✅ כולל מע״מ" value={`₪${sub.priceIncVat.toLocaleString('he-IL')}`} valueColor="text-emerald-400" />
+                        </div>
+
+                        {/* Actions row */}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <select
+                            value={sub.status}
+                            onChange={e => handleStatusChange(sub, e.target.value as SubStatus)}
+                            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white"
+                          >
+                            {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                              <option key={k} value={k}>{v}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => startEdit(sub)}
+                            className="px-3 py-1.5 bg-blue-900/40 hover:bg-blue-800/60 text-blue-400 border border-blue-800 rounded-lg text-xs font-medium transition-colors"
+                          >
+                            ✏️ ערוך
+                          </button>
+                          {sub.labId && (
+                            <Link to="/admin/labs" className="text-xs text-gray-500 hover:text-blue-400 underline underline-offset-2">
+                              פרטי מעבדה ←
+                            </Link>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
