@@ -145,6 +145,10 @@ export interface AppNotification {
 export type SubscriptionPlan =
   | 'clinic_basic' | 'clinic_pro'
   | 'lab_basic' | 'lab_pro' | 'enterprise'
+  // New plans (2026+)
+  | 'lab_lifetime_3y'  // one-time ₪19,900 — 3 years
+  | 'lab_starter'      // monthly ₪290 — up to 3 doctors
+  | 'lab_standard'     // monthly ₪590 — up to 10 doctors
 
 export type SubscriptionStatus = 'active' | 'trial' | 'overdue' | 'cancelled'
 
@@ -162,19 +166,25 @@ export interface Subscription {
 }
 
 export const PLAN_LABELS: Record<SubscriptionPlan, string> = {
-  clinic_basic: 'מרפאה בסיסי — 99₪',
-  clinic_pro:   'מרפאה פרו — 199₪',
-  lab_basic:    'מעבדה בסיסי — 499₪',
-  lab_pro:      'מעבדה פרו — 999₪',
-  enterprise:   'Enterprise',
+  clinic_basic:    'מרפאה בסיסי — 99₪',
+  clinic_pro:      'מרפאה פרו — 199₪',
+  lab_basic:       'מעבדה בסיסי — 499₪/חודש',
+  lab_pro:         'מעבדה פרו — 990₪/חודש (ללא הגבלה)',
+  enterprise:      'Enterprise',
+  lab_lifetime_3y: 'חבילת השקה — 19,900₪ חד-פעמי (3 שנים)',
+  lab_starter:     'Starter — 290₪/חודש (עד 3 רופאים)',
+  lab_standard:    'Standard — 590₪/חודש (עד 10 רופאים)',
 }
 
 export const PLAN_PRICES: Record<SubscriptionPlan, number> = {
-  clinic_basic: 99,
-  clinic_pro:   199,
-  lab_basic:    499,
-  lab_pro:      999,
-  enterprise:   0,
+  clinic_basic:    99,
+  clinic_pro:      199,
+  lab_basic:       499,
+  lab_pro:         990,
+  enterprise:      0,
+  lab_lifetime_3y: 19900,
+  lab_starter:     290,
+  lab_standard:    590,
 }
 
 // ─── Audit log ────────────────────────────────────────────────────────────────
