@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { getMyOrders, getOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
+import { IconActive, IconLate, IconPending, StatusKpi } from '../components/StatusKpi'
 import type { WorkOrder } from '../types'
 
 type TabKey = 'all' | 'pending' | 'active' | 'delayed' | 'shipping' | 'done'
@@ -12,7 +13,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'pending',  label: 'ממתין לאישור' },
   { key: 'active',   label: 'בתהליך' },
   { key: 'delayed',  label: 'מאחרים' },
-  { key: 'shipping', label: 'בדרך אליך 🚚' },
+  { key: 'shipping', label: 'בדרך אליך' },
   { key: 'done',     label: 'הושלמו' },
 ]
 
@@ -69,22 +70,6 @@ export default function DoctorDashboard() {
     !o.requiresDoctorApproval && o.currentStage !== 'delivered' && o.currentStage !== 'with_courier'
   ).length
 
-  const KpiCard = ({ count, label, tabKey, icon, color, numColor }: {
-    count: number; label: string; tabKey: TabKey; icon: string; color: string; numColor: string
-  }) => (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={() => setTab(t => t === tabKey ? 'all' : tabKey)}
-      className={`card text-center w-full transition-all ${
-        tab === tabKey ? 'ring-2 ring-primary-400 bg-primary-50' : (count > 0 ? color : '')
-      }`}
-    >
-      <div className="text-xl mb-1">{icon}</div>
-      <p className={`text-2xl font-bold ${tab === tabKey ? 'text-primary-700' : numColor}`}>{count}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
-    </motion.button>
-  )
-
   return (
     <div className="space-y-4 pb-20 md:pb-4">
       <div>
@@ -93,10 +78,10 @@ export default function DoctorDashboard() {
       </div>
 
       {/* KPI cards — clickable */}
-      <div className="grid grid-cols-3 gap-3">
-        <KpiCard count={activeCount}   label="פעילות"       tabKey="active"   icon="🦷" color=""                              numColor="text-primary-600" />
-        <KpiCard count={approvalCount} label="ממתין לאישור" tabKey="pending"  icon="⏳" color="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
-        <KpiCard count={delayedCount}  label="מאחרים"        tabKey="delayed"  icon="🚨" color="bg-red-50 border-red-200"       numColor="text-red-500" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatusKpi count={activeCount}   label="פעילות"       icon={<IconActive />}  tone="navy"  active={tab === 'active'}  onClick={() => setTab(t => t === 'active' ? 'all' : 'active')} />
+        <StatusKpi count={approvalCount} label="ממתין לאישור" icon={<IconPending />} tone="amber" active={tab === 'pending'} onClick={() => setTab(t => t === 'pending' ? 'all' : 'pending')} />
+        <StatusKpi count={delayedCount}  label="מאחרים"       icon={<IconLate />}    tone="red"   active={tab === 'delayed'} onClick={() => setTab(t => t === 'delayed' ? 'all' : 'delayed')} />
       </div>
 
       {/* בדרך אליך — banner (original position) but clickable */}

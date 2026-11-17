@@ -3,17 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getAllOrders, getOrder } from '../api/workOrders'
 import { useOrdersStore } from '../store/ordersStore'
 import WorkOrderCard from '../components/WorkOrderCard'
+import { IconLate, IconNew, IconOpen, IconPending, StatusKpi } from '../components/StatusKpi'
 import type { WorkOrder } from '../types'
 
 type FilterKey = 'all' | 'new' | 'open' | 'delayed' | 'pending_approval' | 'shipping' | 'done'
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all',              label: 'הכל' },
-  { key: 'new',              label: 'חדשות 📥' },
+  { key: 'new',              label: 'חדשות' },
   { key: 'open',             label: 'פתוחות' },
   { key: 'pending_approval', label: 'ממתין לאישור' },
   { key: 'delayed',          label: 'מאחרות' },
-  { key: 'shipping',         label: 'אצל שליח 🚚' },
+  { key: 'shipping',         label: 'אצל שליח' },
   { key: 'done',             label: 'הושלמו' },
 ]
 
@@ -120,22 +121,6 @@ export default function LabDashboard() {
   const pendingApproval = orders.filter((o: WorkOrder) => o.requiresDoctorApproval).length
   const shipping        = orders.filter((o: WorkOrder) => o.currentStage === 'with_courier').length
 
-  const KpiCard = ({ count, label, filterKey, icon, colorClass, numColor }: {
-    count: number; label: string; filterKey: FilterKey; icon: string; colorClass?: string; numColor: string
-  }) => (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={() => setFilter(f => f === filterKey ? 'all' : filterKey)}
-      className={`card text-center w-full transition-all ${
-        filter === filterKey ? 'ring-2 ring-primary-400 bg-primary-50' : (colorClass || '')
-      }`}
-    >
-      <div className="text-xl mb-1">{icon}</div>
-      <p className={`text-2xl font-bold ${filter === filterKey ? 'text-primary-700' : numColor}`}>{count}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
-    </motion.button>
-  )
-
   return (
     <div className="space-y-4 pb-20 md:pb-4">
       <div className="flex items-center justify-between">
@@ -158,11 +143,11 @@ export default function LabDashboard() {
       </div>
 
       {/* KPI cards — clickable */}
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard count={newOrders}       label="חדשות 📥"      filterKey="new"              icon="🆕" colorClass="bg-indigo-50 border-indigo-200" numColor="text-indigo-600" />
-        <KpiCard count={open}            label="פתוחות"        filterKey="open"             icon="📋" colorClass=""                               numColor="text-primary-600" />
-        <KpiCard count={pendingApproval} label="ממתין לאישור"  filterKey="pending_approval" icon="⏳" colorClass="bg-yellow-50 border-yellow-200" numColor="text-yellow-600" />
-        <KpiCard count={delayed}         label="מאחרות"         filterKey="delayed"          icon="🚨" colorClass="bg-red-50 border-red-200"       numColor="text-red-500" />
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatusKpi count={newOrders}       label="חדשות"         icon={<IconNew />}     tone="blue"  active={filter === 'new'}              onClick={() => setFilter(f => f === 'new' ? 'all' : 'new')} />
+        <StatusKpi count={open}            label="פתוחות"        icon={<IconOpen />}    tone="navy"  active={filter === 'open'}             onClick={() => setFilter(f => f === 'open' ? 'all' : 'open')} />
+        <StatusKpi count={pendingApproval} label="ממתין לאישור"  icon={<IconPending />} tone="amber" active={filter === 'pending_approval'} onClick={() => setFilter(f => f === 'pending_approval' ? 'all' : 'pending_approval')} />
+        <StatusKpi count={delayed}         label="מאחרות"        icon={<IconLate />}    tone="red"   active={filter === 'delayed'}          onClick={() => setFilter(f => f === 'delayed' ? 'all' : 'delayed')} />
       </div>
 
       {/* Search + Doctor filter */}

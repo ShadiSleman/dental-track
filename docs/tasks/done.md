@@ -42,3 +42,4 @@
 
 | 12/10/2026 | Multi-lab architecture — GET /api/labs, GET /api/labs/mine, lab selection in NewWorkOrder, LabLogo component, per-lab header in AppLayout, seedMultiLab.js |
 | 12/10/2026 | רופא בכמה מעבדות (LabMember), מחירון נפרד שלא משנה מנויים קיימים, דוגמת אורתו-דנט אחרי 3 שנים |
+| 17/11/2026 | כרטיסי סטטוס בלוח הרופא והמעבדה: אייקון, מספר ותווית בכרטיס קומפקטי במקום ריבוע עם אימוג'י |
